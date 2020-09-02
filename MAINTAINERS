@@ -9404,6 +9404,13 @@ T:	git git://linuxtv.org/media.git
 F:	Documentation/devicetree/bindings/media/i2c/galaxycore,gc2145.yaml
 F:	drivers/media/i2c/gc2145.c
 
+GALAXYCORE GC5035 SENSOR DRIVER
+M:	Tomasz Figa <tfiga@chromium.org>
+L:	linux-media@vger.kernel.org
+S:	Maintained
+T:	git git://linuxtv.org/media_tree.git
+F:	drivers/media/i2c/gc5035.c
+
 GATEWORKS SYSTEM CONTROLLER (GSC) DRIVER
 M:	Tim Harvey <tharvey@gateworks.com>
 S:	Maintained
