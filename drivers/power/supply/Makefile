@@ -91,6 +91,7 @@ smb1360-$(CONFIG_SMB1360_DEBUG)	+= smb1360-dump.o
 obj-$(CONFIG_SMB1360)		+= smb1360.o
 obj-$(CONFIG_BATTERY_PM8916_BMS_VM)	+= pm8916_bms_vm.o
 obj-$(CONFIG_CHARGER_PM8916_LBC)	+= pm8916_lbc.o
+obj-$(CONFIG_CHARGER_QCOM_SMBCHG)	+= qcom-smbchg.o
 obj-$(CONFIG_CHARGER_BQ2415X)	+= bq2415x_charger.o
 obj-$(CONFIG_CHARGER_BQ24190)	+= bq24190_charger.o
 obj-$(CONFIG_CHARGER_BQ24257)	+= bq24257_charger.o
