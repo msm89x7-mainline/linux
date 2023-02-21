@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
+#include "msm8917.dtsi"
+
+&gcc {
+	compatible = "qcom,gcc-qm215";
+};
+
+&rpmpd {
+	compatible = "qcom,qm215-rpmpd";
+};

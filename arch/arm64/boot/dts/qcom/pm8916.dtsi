@@ -47,7 +47,7 @@
 			mode-bootloader = <0x2>;
 			mode-recovery = <0x1>;
 
-			pwrkey {
+			pm8916_pwrkey: pwrkey {
 				compatible = "qcom,pm8941-pwrkey";
 				interrupts = <0x0 0x8 0 IRQ_TYPE_EDGE_BOTH>;
 				debounce = <15625>;
@@ -210,6 +210,10 @@
 			status = "disabled";
 		};
 
+		pm8916_spmi_regulators: regulators {
+			compatible = "qcom,pm8916-regulators";
+		};
+
 		pm8916_vib: vibrator@c000 {
 			compatible = "qcom,pm8916-vib";
 			reg = <0xc000>;
@@ -219,6 +223,9 @@
 		pm8916_codec: audio-codec@f000 {
 			compatible = "qcom,pm8916-wcd-analog-codec";
 			reg = <0xf000>;
+			reg-names = "pmic-codec-core";
+			clocks = <&xo_board>;
+			clock-names = "mclk";
 			interrupt-parent = <&spmi_bus>;
 			interrupts = <0x1 0xf0 0x0 IRQ_TYPE_NONE>,
 				     <0x1 0xf0 0x1 IRQ_TYPE_NONE>,

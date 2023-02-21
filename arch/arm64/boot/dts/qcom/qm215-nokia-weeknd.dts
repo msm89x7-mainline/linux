@@ -1,0 +1,825 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
+/dts-v1/;
+
+#include "qm215-pm8916.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include <dt-bindings/pinctrl/qcom,pmic-mpp.h>
+#include <dt-bindings/sound/qcom,q6afe.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
+#include <dt-bindings/sound/qcom,q6voice.h>
+
+/ {
+	model = "Nokia 2780 Flip (nokia-weeknd)";
+	compatible = "nokia,weeknd", "qcom,qm215", "qcom,msm8917";
+	chassis-type = "handset";
+
+	aliases {
+		serial0 = &blsp1_uart2;
+	};
+
+	chosen {
+		stdout-path = "serial0";
+	};
+
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pm8916_pwm 0 100000>;
+
+		brightness-levels = <0 4 8 16 32 64 128 255>;
+		num-interpolated-steps = <2>;
+		default-brightness-level = <10>;
+	};
+
+	bat: battery {
+		compatible = "simple-battery";
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4400000>;
+		energy-full-design-microwatt-hours = <5580000>;
+		charge-full-design-microamp-hours = <1450000>;
+
+		ocv-capacity-celsius = <25>;
+		ocv-capacity-table-0 = <4380000 100>, <4298000 95>,
+			<4236000 90>, <4178000 85>, <4123000 80>, <4070000 75>,
+			<4018000 70>, <3969000 65>, <3918000 60>, <3876000 55>,
+			<3846000 50>, <3820000 45>, <3798000 40>, <3780000 35>,
+			<3764000 30>, <3750000 25>, <3732000 20>, <3710000 16>,
+			<3692000 13>, <3686000 11>, <3684000 10>, <3682000 9>,
+			<3678000 8>, <3671000 7>, <3650000 6>, <3612000 5>,
+			<3558000 4>, <3488000 3>, <3392000 2>, <3249000 1>,
+			<3000000 0>;
+	};
+
+	camera_vdig: camera-vdig-supply {
+		compatible = "regulator-fixed";
+
+		pinctrl-0 = <&camera_vdig_default>;
+		pinctrl-names = "default";
+
+		regulator-name = "camera-vdig-supply";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+
+		gpio = <&tlmm 38 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	display_mux: mux-controller {
+		compatible = "gpio-mux";
+		#mux-control-cells = <0>;
+
+		pinctrl-0 = <&disp_mux_default>;
+		pinctrl-names = "default";
+
+		mux-gpios = <&tlmm 93 GPIO_ACTIVE_HIGH>;
+	};
+
+	ext_backlight: ext-backlight {
+		compatible = "led-backlight";
+		leds = <&ext_backlight_led>;
+
+		brightness-levels = <0 1>;
+		default-brightness-level = <1>;
+	};
+
+	flash-led-controller {
+		/* Not sure if this controller is actually present */
+		/* (no visible difference between flash and torch modes) */
+		compatible = "sgmicro,sgm3140";
+		flash-gpios = <&tlmm 34 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&tlmm 35 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&camera_flash_default>;
+
+		flash_led: led {
+			function = LED_FUNCTION_FLASH;
+			color = <LED_COLOR_ID_WHITE>;
+			flash-max-timeout-us = <250000>;
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		pinctrl-0 = <&gpio_keys_default &lid_switch_default>;
+		pinctrl-names = "default";
+
+		label = "GPIO Buttons";
+
+		button-emergency {
+			label = "Emergency call button";
+			gpios = <&tlmm 28 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_SOS>;
+			wakeup-source;
+		};
+
+		button-volume-up {
+			label = "Volume Up";
+			gpios = <&tlmm 91 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEUP>;
+			wakeup-source;
+		};
+
+		switch-lid-close {
+			gpios = <&tlmm 44 GPIO_ACTIVE_LOW>;
+			linux,input-type = <EV_SW>;
+			linux,code = <SW_LID>;
+			wakeup-source;
+		};
+	};
+
+	matrix_keypad: keypad {
+		compatible = "gpio-matrix-keypad";
+
+		col-scan-delay-ms = <7>;
+		debounce-delay-ms = <10>;
+		gpio-activelow;
+		pinctrl-0 = <&matrix_keypad_row_default &matrix_keypad_col_default>;
+		pinctrl-names = "default";
+
+		row-gpios = <&tlmm 124 GPIO_ACTIVE_LOW
+			     &tlmm 90 GPIO_ACTIVE_LOW
+			     &tlmm 126 GPIO_ACTIVE_LOW
+			     &tlmm 127 GPIO_ACTIVE_LOW
+			     &tlmm 128 GPIO_ACTIVE_LOW
+			     &tlmm 130 GPIO_ACTIVE_LOW>;
+
+		col-gpios = <&tlmm 125 GPIO_ACTIVE_LOW
+			     &tlmm 131 GPIO_ACTIVE_LOW
+			     &tlmm 132 GPIO_ACTIVE_LOW
+			     &tlmm 133 GPIO_ACTIVE_LOW>;
+
+		linux,keymap = <
+			MATRIX_KEY(0, 0, KEY_2)
+			MATRIX_KEY(0, 1, KEY_UP)
+			MATRIX_KEY(0, 2, KEY_ENTER)
+			MATRIX_KEY(0, 3, KEY_DOWN)
+
+			MATRIX_KEY(1, 0, KEY_NUMERIC_STAR)
+			MATRIX_KEY(1, 1, KEY_8)
+			MATRIX_KEY(1, 2, KEY_NUMERIC_POUND)
+			MATRIX_KEY(1, 3, KEY_0)
+
+			MATRIX_KEY(2, 0, KEY_3)
+			MATRIX_KEY(2, 1, KEY_9)
+			MATRIX_KEY(2, 2, KEY_6)
+			MATRIX_KEY(2, 3, KEY_5)
+
+			MATRIX_KEY(3, 0, KEY_KBD_LCD_MENU1)
+			MATRIX_KEY(3, 1, KEY_KBD_LCD_MENU2)
+			MATRIX_KEY(3, 2, KEY_RIGHT)
+			MATRIX_KEY(3, 3, KEY_BACKSPACE)
+
+			MATRIX_KEY(4, 0, KEY_1)
+			MATRIX_KEY(4, 1, KEY_MENU)
+			MATRIX_KEY(4, 2, KEY_LEFT)
+			MATRIX_KEY(4, 3, KEY_PICKUP_PHONE)
+
+			MATRIX_KEY(5, 0, KEY_4)
+			MATRIX_KEY(5, 1, KEY_7)
+		>;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		pinctrl-0 = <&ext_backlight_default>, <&keypad_backlight_default>;
+		pinctrl-names = "default";
+
+		ext_backlight_led: led-0 {
+			function = LED_FUNCTION_BACKLIGHT;
+			color = <LED_COLOR_ID_WHITE>;
+			gpios = <&pm8916_gpios 2 GPIO_ACTIVE_HIGH>;
+		};
+
+		led-1 {
+			function = LED_FUNCTION_KBD_BACKLIGHT;
+			color = <LED_COLOR_ID_WHITE>;
+			gpios = <&pm8916_gpios 4 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+
+&adsp {
+	status = "okay";
+};
+
+&adsp_mem {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
+};
+
+&bam_dmux {
+	status = "okay";
+};
+
+&bam_dmux_dma {
+	status = "okay";
+};
+
+&blsp1_spi3 {
+	status = "okay";
+
+	spi@0 {
+		compatible = "spi-mux";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		spi-max-frequency = <50000000>;
+
+		pinctrl-0 = <&disp_shared_default>;
+		pinctrl-names = "default";
+
+		mux-controls = <&display_mux>;
+
+		display@0 {
+			compatible = "nokia,weeknd-st7789vx2-yihua-panel", "panel-mipi-dbi-spi";
+			reg = <0>;
+			backlight = <&backlight>;
+			reset-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
+			dc-gpios = <&tlmm 61 GPIO_ACTIVE_HIGH>;
+			spi-max-frequency = <50000000>;
+			power-supply = <&pm8916_l17>;
+			io-supply = <&pm8916_l6>;
+			width-mm = <42>;
+			height-mm = <56>;
+
+			pinctrl-0 = <&disp0_gpios_default>;
+			pinctrl-names = "default";
+
+			panel-timing {
+				hactive = <240>;
+				vactive = <320>;
+				hback-porch = <0>;
+				vback-porch = <0>;
+				hfront-porch = <0>;
+				vfront-porch = <0>;
+				hsync-len = <0>;
+				vsync-len = <0>;
+				clock-frequency = <(240 * 320 * 30)>; /* 30 fps */
+			};
+		};
+
+		ext-display@1 {
+			compatible = "nokia,weeknd-gc9104-v2-panel", "panel-mipi-dbi-spi";
+			reg = <1>;
+			backlight = <&ext_backlight>;
+			reset-gpios = <&tlmm 64 GPIO_ACTIVE_HIGH>;
+			dc-gpios = <&tlmm 61 GPIO_ACTIVE_HIGH>;
+			spi-max-frequency = <50000000>;
+			power-supply = <&pm8916_l17>;
+			io-supply = <&pm8916_l6>;
+			width-mm = <23>;
+			height-mm = <35>;
+
+			pinctrl-0 = <&disp1_gpios_default>;
+			pinctrl-names = "default";
+
+			panel-timing {
+				hactive = <128>;
+				vactive = <160>;
+				hback-porch = <0>;
+				vback-porch = <0>;
+				hfront-porch = <0>;
+				vfront-porch = <0>;
+				hsync-len = <0>;
+				vsync-len = <0>;
+				clock-frequency = <(128 * 160 * 30)>; /* 30 fps */
+			};
+		};
+	};
+};
+
+&camss {
+	status = "okay";
+	ports {
+		port@0 {
+			reg = <0>;
+			csiphy0_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				link-frequencies = /bits/ 64 <438000000>;
+				remote-endpoint = <&gc5035_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	status = "okay";
+};
+
+&cci_i2c0 {
+	camera@3f {
+		compatible = "galaxycore,gc5035";
+		reg = <0x3f>;
+
+		resetb-gpios = <&tlmm 36 GPIO_ACTIVE_LOW>;
+		pwdn-gpios = <&tlmm 33 GPIO_ACTIVE_LOW>;
+
+		pinctrl-0 = <&camera_default>;
+		pinctrl-names = "default";
+
+		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		clock-names = "mclk";
+		clock-frequency = <24000000>;
+
+		iovdd-supply = <&pm8916_l6>;
+		avdd28-supply = <&pm8916_l16>;
+		dvdd12-supply = <&camera_vdig>;
+
+		port {
+			gc5035_ep: endpoint {
+				data-lanes = <0 1>;
+				link-frequencies = /bits/ 64 <438000000>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0 {
+	status = "disabled";
+};
+
+&mdss_dsi0_phy {
+	status = "disabled";
+};
+
+&mba_mem {
+	status = "okay";
+};
+
+&modem {
+	status = "okay";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x4b00000>;
+	status = "okay";
+};
+
+&pm8916_bms {
+	monitored-battery = <&bat>;
+	power-supplies = <&pm8916_charger>;
+	status = "okay";
+};
+
+&pm8916_charger {
+	qcom,vdd-safe = <4250000>;
+	qcom,ibat-safe = <360000>;
+
+	monitored-battery = <&bat>;
+
+	status = "okay";
+};
+
+&pm8916_codec {
+	status = "okay";
+
+	qcom,hphl-jack-type-normally-open;
+	qcom,micbias1-ext-cap;
+	qcom,micbias2-ext-cap;
+	qcom,mbhc-vthreshold-low = <85 120 225 450 500>;
+	qcom,mbhc-vthreshold-high = <85 120 225 450 500>;
+};
+
+&pm8916_pwm {
+	pinctrl-0 = <&pwm_out>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&pm8916_pwrkey {
+	linux,code = <KEY_HANGUP_PHONE>;
+};
+
+&pm8916_resin {
+	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
+};
+
+&pm8916_vib {
+	status = "okay";
+};
+
+&q6afedai {
+	dai@16 {
+		reg = <PRIMARY_MI2S_RX>;
+		qcom,sd-lines = <0 1>;
+	};
+	dai@20 {
+		reg = <TERTIARY_MI2S_TX>;
+		qcom,sd-lines = <0 1>;
+	};
+};
+
+&q6asmdai {
+	dai@0 {
+		reg = <0>;
+		direction = <Q6ASM_DAI_RX>;
+	};
+	dai@1 {
+		reg = <1>;
+		direction = <Q6ASM_DAI_TX>;
+	};
+	dai@2 {
+		reg = <2>;
+		direction = <Q6ASM_DAI_RX>;
+	};
+	dai@3 {
+		reg = <3>;
+		direction = <Q6ASM_DAI_RX>;
+		is-compress-dai;
+	};
+};
+
+&sdhc_1 {
+	status = "okay";
+};
+
+&sdhc_2 {
+	pinctrl-0 = <&sdc2_default &sdc2_cd_default>;
+	pinctrl-1 = <&sdc2_sleep &sdc2_cd_default>;
+	pinctrl-names = "default", "sleep";
+
+	non-removable;
+
+	status = "okay";
+};
+
+&sleep_clk {
+	clock-frequency = <32768>;
+};
+
+&sound {
+	status = "okay";
+	model = "msm8916";
+
+	audio-routing =
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS Internal2",
+		"AMIC3", "MIC BIAS External1";
+
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&cdc_pdm_lines_act>;
+	pinctrl-1 = <&cdc_pdm_lines_sus>;
+
+	dai-link-multimedia1 {
+		link-name = "MultiMedia1";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+	dai-link-multimedia2 {
+		link-name = "MultiMedia2";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
+		};
+	};
+
+	dai-link-multimedia3 {
+		link-name = "MultiMedia3";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA3>;
+		};
+	};
+
+	dai-link-multimedia4 {
+		link-name = "MultiMedia4";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA4>;
+		};
+	};
+
+	dai-link-voicemmode1 {
+		link-name = "VoiceMMode1";
+		cpu {
+			sound-dai = <&q6voicedai VOICEMMODE1>;
+		};
+	};
+
+	sound_dai_primary: dai-link-primary {
+		link-name = "Primary MI2S";
+		cpu {
+			sound-dai = <&q6afedai PRIMARY_MI2S_RX>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+		codec {
+			sound-dai = <&lpass_codec 0>, <&pm8916_codec 0>;
+		};
+	};
+
+	sound_dai_secondary: dai-link-secondary {
+		link-name = "Secondary MI2S";
+		status = "disabled"; /* Needs extra codec configuration */
+		cpu {
+			sound-dai = <&q6afedai SECONDARY_MI2S_RX>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+
+	sound_dai_tertiary: dai-link-tertiary {
+		link-name = "Tertiary MI2S";
+		cpu {
+			sound-dai = <&q6afedai TERTIARY_MI2S_TX>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+		codec {
+			sound-dai = <&lpass_codec 1>, <&pm8916_codec 1>;
+		};
+	};
+
+	sound_dai_quaternary: dai-link-quaternary {
+		link-name = "Quaternary MI2S";
+		status = "disabled"; /* Needs extra codec configuration */
+		cpu {
+			sound-dai = <&q6afedai QUATERNARY_MI2S_RX>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+};
+
+&usb {
+	extcon = <&pm8916_charger>;
+	status = "okay";
+};
+
+&usb_hs_phy {
+	extcon = <&pm8916_charger>;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
+	status = "okay";
+};
+
+&wcnss_mem {
+	status = "okay";
+};
+
+&smd_rpm_regulators {
+	vdd_l1_l2_l3-supply = <&pm8916_s3>;
+	vdd_l4_l5_l6-supply = <&pm8916_s4>;
+	vdd_l7-supply = <&pm8916_s4>;
+
+	s3 {
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+	};
+
+	s4 {
+		regulator-min-microvolt = <2050000>;
+		regulator-max-microvolt = <2050000>;
+	};
+
+	l1 {
+		regulator-min-microvolt = <968000>;
+		regulator-max-microvolt = <1152000>;
+	};
+
+	l3 {
+		regulator-min-microvolt = <1325000>;
+		regulator-max-microvolt = <1325000>;
+	};
+
+	l4 {
+		regulator-min-microvolt = <1744000>;
+		regulator-max-microvolt = <1896000>;
+	};
+
+	l5 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	l6 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	l7 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	l8 {
+		regulator-min-microvolt = <2900000>;
+		regulator-max-microvolt = <2900000>;
+	};
+
+	l9 {
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	l10 {
+		regulator-min-microvolt = <2704000>;
+		regulator-max-microvolt = <2850000>;
+	};
+
+	l11 {
+		regulator-min-microvolt = <2950000>;
+		regulator-max-microvolt = <2950000>;
+		regulator-system-load = <200000>;
+		regulator-allow-set-load;
+	};
+
+	l12 {
+		regulator-min-microvolt = <2950000>;
+		regulator-max-microvolt = <2950000>;
+	};
+
+	l13 {
+		regulator-min-microvolt = <3075000>;
+		regulator-max-microvolt = <3075000>;
+	};
+
+	l14 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3056000>;
+	};
+
+	l15 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	l16 {
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+
+	l17 {
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2850000>;
+	};
+
+	l18 {
+		regulator-min-microvolt = <2600000>;
+		regulator-max-microvolt = <2800000>;
+	};
+};
+
+&tlmm {
+	camera_default: camera-default-state {
+		mclk {
+			pins = "gpio26";
+			function = "cam_mclk";
+			drive-strength = <2>;
+			bias-disable;
+		};
+		gpios {
+			pins = "gpio33", "gpio36";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	camera_flash_default: camera-flash-default-state {
+		pins = "gpio34", "gpio35";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	camera_vdig_default: camera-vdig-default-state {
+		pins = "gpio38";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cdc_pdm_lines_act: pdm-lines-on-state {
+		pins = "gpio69", "gpio70", "gpio71", "gpio72",
+		       "gpio73", "gpio74";
+		function = "cdc_pdm0";
+
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	cdc_pdm_lines_sus: pdm-lines-off-state {
+		pins = "gpio69", "gpio70", "gpio71", "gpio72",
+		       "gpio73", "gpio74";
+		function = "cdc_pdm0";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	disp_mux_default: disp-mux-default-state {
+		pins = "gpio93";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	disp_shared_default: disp-shared-default-state {
+		pins = "gpio61";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	disp0_gpios_default: disp0-gpios-default-state {
+		pins = "gpio24", "gpio60";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	disp1_gpios_default: disp1-gpios-default-state {
+		pins = "gpio64";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	gpio_keys_default: gpio-keys-default-state {
+		pins = "gpio91", "gpio28";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
+
+	lid_switch_default: lid-switch-default-state {
+		pins = "gpio44";
+		function = "gpio";
+		drive-strength = <6>;
+		bias-pull-up;
+	};
+
+	matrix_keypad_row_default: matrix-keypad-row-gpio-state {
+		pins = "gpio124", "gpio90", "gpio126", "gpio127", "gpio128", "gpio130";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
+
+	matrix_keypad_col_default: matrix-keypad-col-default-state {
+		pins = "gpio125", "gpio131", "gpio132", "gpio133";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	sdc2_cd_default: sdc2-cd-default-state {
+		pins = "gpio67";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+};
+
+&pm8916_gpios {
+	ext_backlight_default: ext-backlight-default-state {
+		pins = "gpio2";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-low;
+		power-source = <PM8916_GPIO_L5>;
+	};
+	keypad_backlight_default: keypad-backlight-default-state {
+		pins = "gpio4";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-low;
+		power-source = <PM8916_GPIO_L5>;
+	};
+};
+
+&pm8916_mpps {
+	pwm_out: mpp2-state {
+		pins = "mpp2";
+		function = "digital";
+		power-source = <PM8916_MPP_VPH>;
+		output-low;
+		qcom,dtest = <1>;
+	};
+};
+
+&xo_board {
+	clock-frequency = <19200000>;
+};
