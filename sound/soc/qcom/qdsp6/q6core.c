@@ -20,6 +20,9 @@
 #define AVCS_CMDRSP_ADSP_EVENT_GET_STATE	0x0001290D
 #define AVCS_GET_VERSIONS       0x00012905
 #define AVCS_GET_VERSIONS_RSP   0x00012906
+#define AVCS_CMDRSP_Q6_ID_2_6	0x00040000
+#define AVCS_CMDRSP_Q6_ID_2_7	0x00040001
+#define AVCS_CMDRSP_Q6_ID_2_8	0x00040002
 #define AVCS_CMD_GET_FWK_VERSION	0x001292c
 #define AVCS_CMDRSP_GET_FWK_VERSION	0x001292d
 
@@ -63,6 +66,7 @@ struct q6core {
 	bool get_state_supported;
 	bool get_version_supported;
 	bool is_version_requested;
+	int adsp_version;
 };
 
 static struct q6core *g_core;
@@ -108,6 +112,7 @@ static int q6core_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 		if (!core->fwk_version)
 			return -ENOMEM;
 
+		core->adsp_version = Q6_ADSP_VERSION_2_8;
 		core->fwk_version_supported = true;
 		core->resp_received = true;
 
@@ -115,6 +120,7 @@ static int q6core_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 	}
 	case AVCS_GET_VERSIONS_RSP: {
 		struct avcs_cmdrsp_get_version *v;
+		int i;
 
 		v = data->payload;
 
@@ -124,6 +130,27 @@ static int q6core_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 					    GFP_ATOMIC);
 		if (!core->svc_version)
 			return -ENOMEM;
+
+		for (i = 0; i < g_core->svc_version->num_services; i++) {
+			struct avcs_svc_info *info;
+
+			info = &g_core->svc_version->svc_api_info[i];
+			if (info->service_id != APR_SVC_ADSP_CORE)
+				continue;
+
+			switch (info->version) {
+			case AVCS_CMDRSP_Q6_ID_2_6:
+				core->adsp_version = Q6_ADSP_VERSION_2_6;
+				break;
+			case AVCS_CMDRSP_Q6_ID_2_7:
+				core->adsp_version = Q6_ADSP_VERSION_2_7;
+				break;
+			case AVCS_CMDRSP_Q6_ID_2_8:
+				core->adsp_version = Q6_ADSP_VERSION_2_8;
+				break;
+			}
+			break;
+		}
 
 		core->get_version_supported = true;
 		core->resp_received = true;
@@ -294,6 +321,31 @@ int q6core_get_svc_api_info(int svc_id, struct q6core_svc_api_info *ainfo)
 EXPORT_SYMBOL_GPL(q6core_get_svc_api_info);
 
 /**
+ * q6core_get_adsp_version() - Get the core version number.
+ *
+ * Return: version code on success and error code on failure or unsupported
+ */
+int q6core_get_adsp_version(void)
+{
+	int ret;
+
+	if (!g_core)
+		return -ENODEV;
+
+	mutex_lock(&g_core->lock);
+	if (!g_core->is_version_requested) {
+		if (q6core_get_fwk_versions(g_core) == -ENOTSUPP)
+			q6core_get_svc_versions(g_core);
+		g_core->is_version_requested = true;
+	}
+	ret = g_core->adsp_version;
+	mutex_unlock(&g_core->lock);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(q6core_get_adsp_version);
+
+/**
  * q6core_is_adsp_ready() - Get status of adsp
  *
  * Return: Will be an true if adsp is ready and false if not.
@@ -334,6 +386,7 @@ static int q6core_probe(struct apr_device *adev)
 	dev_set_drvdata(&adev->dev, g_core);
 
 	mutex_init(&g_core->lock);
+	g_core->adsp_version = -ENOTSUPP;
 	g_core->adev = adev;
 	init_waitqueue_head(&g_core->wait);
 	return 0;
