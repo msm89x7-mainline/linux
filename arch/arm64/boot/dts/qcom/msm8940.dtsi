@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2023, Dang Huynh <danct12@riseup.net>
+ */
+
+#include "msm8937.dtsi"
+
+&gcc {
+	compatible = "qcom,gcc-msm8940";
+};
+
+&rpmcc {
+	compatible = "qcom,rpmcc-msm8940", "qcom,rpmcc";
+};
