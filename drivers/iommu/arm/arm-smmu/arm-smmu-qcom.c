@@ -5,6 +5,8 @@
 
 #include <linux/acpi.h>
 #include <linux/adreno-smmu-priv.h>
+#include <linux/dma-mapping.h>
+#include <linux/of.h>
 #include <linux/delay.h>
 #include <linux/of_device.h>
 #include <linux/firmware/qcom/qcom_scm.h>
@@ -427,6 +429,150 @@ static int qcom_sdm845_smmu500_reset(struct arm_smmu_device *smmu)
 	return ret;
 }
 
+static int qcom_iommu_sec_ptbl_init(struct device *dev)
+{
+	unsigned int spare = 0;
+	unsigned long attrs;
+	dma_addr_t paddr;
+	size_t psize = 0;
+	void *cpu_addr;
+	int ret;
+
+	ret = qcom_scm_iommu_secure_ptbl_size(spare, &psize);
+	if (ret) {
+		dev_err(dev, "failed to get iommu secure pgtable size (%d)\n", ret);
+		return ret;
+	}
+
+	attrs = DMA_ATTR_NO_KERNEL_MAPPING;
+
+	cpu_addr = dma_alloc_attrs(dev, psize, &paddr, GFP_KERNEL, attrs);
+	if (!cpu_addr) {
+		dev_err(dev, "failed to allocate %zu bytes for pgtable\n",
+			psize);
+		return -ENOMEM;
+	}
+
+	ret = qcom_scm_iommu_secure_ptbl_init(paddr, psize, spare);
+	if (ret) {
+		dev_err(dev, "failed to init iommu pgtable (%d)\n", ret);
+		goto free_mem;
+	}
+
+	return 0;
+
+free_mem:
+	dma_free_attrs(dev, psize, cpu_addr, paddr, attrs);
+	return ret;
+}
+
+static int qcom_smmu_prepare(struct arm_smmu_device *smmu)
+{
+	struct qcom_smmu *qsmmu = to_qcom_smmu(smmu);
+	int ret;
+
+	if (qsmmu->sec_id == -1 ||
+	    (qsmmu->sec_cfg_done && !smmu->dev->pm_domain))
+		return 0;
+
+	ret = qcom_scm_restore_sec_cfg(qsmmu->sec_id, 0);
+	if (ret) {
+		dev_err(smmu->dev, "scm_restore_sec_cfg failed: %d\n", ret);
+		return ret;
+	}
+
+	qsmmu->sec_cfg_done = true;
+
+	return 0;
+}
+
+static inline bool qcom_tz_smmu_can_write(struct arm_smmu_device *smmu,
+				       int page)
+{
+	int cb = page - smmu->numpage;
+
+	return cb >= 0 && to_qcom_smmu(smmu)->attached_cbs & BIT(cb);
+}
+
+static void qcom_tz_smmu_writel(struct arm_smmu_device *smmu,
+		int page, int offset, u32 val)
+{
+	if (qcom_tz_smmu_can_write(smmu, page))
+		writel_relaxed(val, arm_smmu_page(smmu, page) + offset);
+}
+
+static void qcom_tz_smmu_writeq(struct arm_smmu_device *smmu,
+		int page, int offset, u64 val)
+{
+	if (qcom_tz_smmu_can_write(smmu, page))
+		writeq_relaxed(val, arm_smmu_page(smmu, page) + offset);
+}
+
+static void qcom_tz_smmu_write_s2cr(struct arm_smmu_device *smmu, int idx)
+{
+}
+
+static int qcom_tz_smmu_cfg_probe(struct arm_smmu_device *smmu)
+{
+	smmu->streamid_mask = 0x7fff;
+	smmu->smr_mask_mask = 0x7fff;
+	smmu->features &= ~(ARM_SMMU_FEAT_FMT_AARCH64_64K |
+			    ARM_SMMU_FEAT_FMT_AARCH64_16K |
+			    ARM_SMMU_FEAT_FMT_AARCH64_4K);
+
+	for (int i = 0; i < smmu->num_mapping_groups; i++) {
+		u32 smr = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_SMR(i));
+
+		if (FIELD_GET(ARM_SMMU_SMR_VALID, smr)) {
+			/* Ignore valid bit for SMR mask extraction. */
+			smr &= ~ARM_SMMU_SMR_VALID;
+			smmu->smrs[i].id = FIELD_GET(ARM_SMMU_SMR_ID, smr);
+			smmu->smrs[i].mask = FIELD_GET(ARM_SMMU_SMR_MASK, smr);
+			smmu->smrs[i].valid = true;
+		} else {
+			smmu->num_mapping_groups = i;
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static int qcom_tz_smmu_alloc_cb(struct arm_smmu_domain *smmu_domain,
+		struct arm_smmu_device *smmu,
+		struct device *dev, int start)
+{
+	struct arm_smmu_master_cfg *cfg = dev_iommu_priv_get(dev);
+	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	struct qcom_smmu *qsmmu = to_qcom_smmu(smmu);
+	int i, idx, cb = -1, cbndx;
+
+	for_each_cfg_sme(cfg, fwspec, i, idx) {
+		cbndx = FIELD_GET(ARM_SMMU_S2CR_CBNDX,
+				  arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_S2CR(idx)));
+
+		if (cb >= 0 && cb != cbndx) {
+			dev_err(dev, "CB Handoff failed: SMEIDX=%d CB %d != %d\n", idx, cb, cbndx);
+			return -EINVAL;
+		}
+		cb = cbndx;
+	}
+
+	qsmmu->attached_cbs |= BIT(cb);
+	return cb;
+}
+
+static const struct arm_smmu_impl qcom_tz_smmu_impl = {
+	.alloc_context_bank = qcom_tz_smmu_alloc_cb,
+	.cfg_probe = qcom_tz_smmu_cfg_probe,
+	.def_domain_type = qcom_smmu_def_domain_type,
+	.prepare = qcom_smmu_prepare,
+	.write_reg = qcom_tz_smmu_writel,
+	.write_reg64 = qcom_tz_smmu_writeq,
+	.write_s2cr = qcom_tz_smmu_write_s2cr,
+	.tlb_sync = qcom_smmu_tlb_sync,
+};
+
 static const struct arm_smmu_impl qcom_smmu_v2_impl = {
 	.init_context = qcom_smmu_init_context,
 	.cfg_probe = qcom_smmu_cfg_probe,
@@ -485,6 +631,7 @@ static struct arm_smmu_device *qcom_smmu_create(struct arm_smmu_device *smmu,
 	const struct device_node *np = smmu->dev->of_node;
 	const struct arm_smmu_impl *impl;
 	struct qcom_smmu *qsmmu;
+	u32 sec_id;
 
 	if (!data)
 		return ERR_PTR(-EINVAL);
@@ -508,6 +655,21 @@ static struct arm_smmu_device *qcom_smmu_create(struct arm_smmu_device *smmu,
 
 	qsmmu->smmu.impl = impl;
 	qsmmu->cfg = data->cfg;
+	qsmmu->sec_id = -1;
+
+	if (!of_property_read_u32(smmu->dev->of_node,
+				  "qcom,iommu-secure-id", &sec_id)) {
+		static bool sec_ptbl_created = false;
+
+		qsmmu->sec_id = sec_id;
+		if (unlikely(!sec_ptbl_created)) {
+			int ret = qcom_iommu_sec_ptbl_init(smmu->dev);
+			if (ret)
+				return ERR_PTR(ret);
+
+			sec_ptbl_created = true;
+		}
+	}
 
 	return &qsmmu->smmu;
 }
@@ -530,6 +692,10 @@ static const struct qcom_smmu_config qcom_smmu_impl0_cfg = {
 static const struct qcom_smmu_match_data msm8996_smmu_data = {
 	.impl = NULL,
 	.adreno_impl = &qcom_adreno_smmu_v2_impl,
+};
+
+static const struct qcom_smmu_match_data msm8937_smmu_data = {
+	.impl = &qcom_tz_smmu_impl,
 };
 
 static const struct qcom_smmu_match_data qcom_smmu_v2_data = {
@@ -558,6 +724,7 @@ static const struct qcom_smmu_match_data qcom_smmu_500_impl0_data = {
  */
 static const struct of_device_id __maybe_unused qcom_smmu_impl_of_match[] = {
 	{ .compatible = "qcom,msm8996-smmu-v2", .data = &msm8996_smmu_data },
+	{ .compatible = "qcom,msm8937-smmu-500", .data = &msm8937_smmu_data },
 	{ .compatible = "qcom,msm8998-smmu-v2", .data = &qcom_smmu_v2_data },
 	{ .compatible = "qcom,qcm2290-smmu-500", .data = &qcom_smmu_500_impl0_data },
 	{ .compatible = "qcom,qdu1000-smmu-500", .data = &qcom_smmu_500_impl0_data  },

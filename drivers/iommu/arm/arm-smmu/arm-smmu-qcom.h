@@ -12,6 +12,9 @@ struct qcom_smmu {
 	bool bypass_quirk;
 	u8 bypass_cbndx;
 	u32 stall_enabled;
+	int sec_id;
+	bool sec_cfg_done;
+	u64 attached_cbs;
 };
 
 enum qcom_smmu_impl_reg_offset {
