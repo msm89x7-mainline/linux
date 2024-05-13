@@ -14,6 +14,7 @@
 #include <linux/of_irq.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/pm_opp.h>
+#include <linux/pm_runtime.h>
 #include <linux/regmap.h>
 #include <linux/regulator/consumer.h>
 #include <linux/spinlock.h>
@@ -193,7 +194,6 @@ static const struct msm_dsi_cfg_handler *dsi_get_config(
 						struct msm_dsi_host *msm_host)
 {
 	const struct msm_dsi_cfg_handler *cfg_hnd = NULL;
-	struct device *dev = &msm_host->pdev->dev;
 	struct clk *ahb_clk;
 	int ret;
 	u32 major = 0, minor = 0;
@@ -204,12 +204,10 @@ static const struct msm_dsi_cfg_handler *dsi_get_config(
 		goto exit;
 	}
 
-	pm_runtime_get_sync(dev);
-
 	ret = clk_prepare_enable(ahb_clk);
 	if (ret) {
 		pr_err("%s: unable to enable ahb_clk\n", __func__);
-		goto runtime_put;
+		goto exit;
 	}
 
 	ret = dsi_get_version(msm_host->ctrl_base, &major, &minor);
@@ -224,8 +222,6 @@ static const struct msm_dsi_cfg_handler *dsi_get_config(
 
 disable_clks:
 	clk_disable_unprepare(ahb_clk);
-runtime_put:
-	pm_runtime_put_sync(dev);
 exit:
 	return cfg_hnd;
 }
@@ -330,6 +326,7 @@ int msm_dsi_runtime_suspend(struct device *dev)
 	if (!msm_host->cfg_hnd)
 		return 0;
 
+	dsi_mgr_power_off(msm_dsi);
 	clk_bulk_disable_unprepare(msm_host->num_bus_clks, msm_host->bus_clks);
 
 	return 0;
@@ -1660,7 +1657,8 @@ static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
 	int ret;
 
-	if (!msg || !msm_host->power_on)
+	/* Clock calculation relies on mode_set */
+	if (!msg || !msm_host->mode)
 		return -EINVAL;
 
 	mutex_lock(&msm_host->cmd_mutex);
@@ -1893,13 +1891,16 @@ int msm_dsi_host_init(struct msm_dsi *msm_dsi)
 		return PTR_ERR(msm_host->ctrl_base);
 	}
 
-	pm_runtime_enable(&pdev->dev);
-
 	msm_host->cfg_hnd = dsi_get_config(msm_host);
 	if (!msm_host->cfg_hnd) {
 		pr_err("%s: get config failed\n", __func__);
 		return -EINVAL;
 	}
+
+	pm_runtime_set_autosuspend_delay(&msm_host->pdev->dev, 200);
+	pm_runtime_use_autosuspend(&msm_host->pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+
 	cfg = msm_host->cfg_hnd->cfg;
 
 	msm_host->id = dsi_host_get_id(msm_host);
@@ -1987,6 +1988,7 @@ void msm_dsi_host_destroy(struct mipi_dsi_host *host)
 	mutex_destroy(&msm_host->cmd_mutex);
 	mutex_destroy(&msm_host->dev_mutex);
 
+	pm_runtime_dont_use_autosuspend(&msm_host->pdev->dev);
 	pm_runtime_disable(&msm_host->pdev->dev);
 }
 
@@ -2043,7 +2045,8 @@ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
 				const struct mipi_dsi_msg *msg)
 {
 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
-	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
+	struct msm_dsi *msm_dsi = platform_get_drvdata(msm_host->pdev);
+	int ret;
 
 	/* TODO: make sure dsi_cmd_mdp is idle.
 	 * Since DSI6G v1.2.0, we can set DSI_TRIG_CTRL.BLOCK_DMA_WITHIN_FRAME
@@ -2054,13 +2057,19 @@ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
 	/*
 	 * mdss interrupt is generated in mdp core clock domain
 	 * mdp clock need to be enabled to receive dsi interrupt
+	 * also we need to power on phys and host
 	 */
-	pm_runtime_get_sync(&msm_host->pdev->dev);
-	cfg_hnd->ops->link_clk_set_rate(msm_host);
-	cfg_hnd->ops->link_clk_enable(msm_host);
+	ret = pm_runtime_resume_and_get(&msm_host->pdev->dev);
+	if (ret)
+		return ret;
+
+	ret = dsi_mgr_power_on(msm_dsi);
+	if (ret) {
+		pm_runtime_put_sync(&msm_host->pdev->dev);
+		return ret;
+	}
 
 	/* TODO: vote for bus bandwidth */
-
 	if (!(msg->flags & MIPI_DSI_MSG_USE_LPM))
 		dsi_set_tx_power_mode(0, msm_host);
 
@@ -2078,7 +2087,6 @@ void msm_dsi_host_xfer_restore(struct mipi_dsi_host *host,
 				const struct mipi_dsi_msg *msg)
 {
 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
-	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
 
 	dsi_intr_ctrl(msm_host, DSI_IRQ_MASK_CMD_DMA_DONE, 0);
 	dsi_write(msm_host, REG_DSI_CTRL, msm_host->dma_cmd_ctrl_restore);
@@ -2087,9 +2095,7 @@ void msm_dsi_host_xfer_restore(struct mipi_dsi_host *host,
 		dsi_set_tx_power_mode(1, msm_host);
 
 	/* TODO: unvote for bus bandwidth */
-
-	cfg_hnd->ops->link_clk_disable(msm_host);
-	pm_runtime_put(&msm_host->pdev->dev);
+	pm_runtime_put_autosuspend(&msm_host->pdev->dev);
 }
 
 int msm_dsi_host_cmd_tx(struct mipi_dsi_host *host,
@@ -2390,7 +2396,6 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
 		goto unlock_ret;
 	}
 
-	pm_runtime_get_sync(&msm_host->pdev->dev);
 	ret = cfg_hnd->ops->link_clk_set_rate(msm_host);
 	if (!ret)
 		ret = cfg_hnd->ops->link_clk_enable(msm_host);
@@ -2412,13 +2417,14 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
 	dsi_ctrl_enable(msm_host, phy_shared_timings, phy);
 
 	msm_host->power_on = true;
+	msm_dsi_host_enable_irq(host);
+
 	mutex_unlock(&msm_host->dev_mutex);
 
 	return 0;
 
 fail_disable_clk:
 	cfg_hnd->ops->link_clk_disable(msm_host);
-	pm_runtime_put(&msm_host->pdev->dev);
 fail_disable_reg:
 	regulator_bulk_disable(msm_host->cfg_hnd->cfg->num_regulators,
 			       msm_host->supplies);
@@ -2438,12 +2444,12 @@ int msm_dsi_host_power_off(struct mipi_dsi_host *host)
 		goto unlock_ret;
 	}
 
+	msm_dsi_host_disable_irq(host);
 	dsi_ctrl_disable(msm_host);
 
 	pinctrl_pm_select_sleep_state(&msm_host->pdev->dev);
 
 	cfg_hnd->ops->link_clk_disable(msm_host);
-	pm_runtime_put(&msm_host->pdev->dev);
 
 	regulator_bulk_disable(msm_host->cfg_hnd->cfg->num_regulators,
 			       msm_host->supplies);
