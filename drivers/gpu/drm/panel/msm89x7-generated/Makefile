@@ -1,0 +1,17 @@
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_INX) += panel-motorola-cedric-nt35596-inx.o
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_TIANMA) += panel-motorola-cedric-nt35596-tianma.o
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_MONTANA_NT35596_INX) += panel-motorola-montana-nt35596-inx.o
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_MONTANA_R63350_TIANMA) += panel-motorola-montana-r63350-tianma.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_HX8394F_BOE) += panel-xiaomi-land-hx8394f-boe.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_ILI9881C_TIANMA) += panel-xiaomi-land-ili9881c-tianma.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_NT35521S_EBBG) += panel-xiaomi-land-nt35521s-ebbg.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_RIVA_HX8394F_BOE) += panel-xiaomi-riva-hx8394f-boe.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_RIVA_ILI9881C_EBBGDJN) += panel-xiaomi-riva-ili9881c-ebbgdjn.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_RIVA_ILI9881C_EBBG) += panel-xiaomi-riva-ili9881c-ebbg.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_RIVA_ILI9881C_TIANMA) += panel-xiaomi-riva-ili9881c-tianma.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_SANTONI_HX8394F_BOE) += panel-xiaomi-santoni-hx8394f-boe.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_SANTONI_ILI9881C_EBBGDJN) += panel-xiaomi-santoni-ili9881c-ebbgdjn.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_SANTONI_ILI9881C_EBBG) += panel-xiaomi-santoni-ili9881c-ebbg.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_UGGLITE_ILI9881C_SC) += panel-xiaomi-ugglite-ili9881c-sc.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_UGGLITE_OTM1901A_HX) += panel-xiaomi-ugglite-otm1901a-hx.o
+obj-$(CONFIG_DRM_PANEL_XIAOMI_UGGLITE_OTM1901A_TM) += panel-xiaomi-ugglite-otm1901a-tm.o
