@@ -1547,12 +1547,14 @@ static int bq256xx_power_supply_init(struct bq256xx_device *bq,
 		return PTR_ERR(bq->charger);
 	}
 
-	bq->battery = devm_power_supply_register(bq->dev,
-						      &bq256xx_battery_desc,
-						      psy_cfg);
-	if (IS_ERR(bq->battery)) {
-		dev_err(dev, "power supply register battery failed\n");
-		return PTR_ERR(bq->battery);
+	if (!device_property_read_bool(dev, "omit-battery-class")) {
+		bq->battery = devm_power_supply_register(bq->dev,
+							 &bq256xx_battery_desc,
+							 psy_cfg);
+		if (IS_ERR(bq->battery)) {
+			dev_err(dev, "power supply register battery failed\n");
+			return PTR_ERR(bq->battery);
+		}
 	}
 	return 0;
 }
