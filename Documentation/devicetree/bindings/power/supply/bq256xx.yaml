@@ -62,6 +62,12 @@ properties:
     $ref: /schemas/types.yaml#/definitions/phandle
     description: phandle to the battery node being monitored
 
+  omit-battery-class:
+    type: boolean
+    description: |
+      If this property is set, the operating system does not try to create a
+      battery device.
+
   interrupts:
     maxItems: 1
     description: |
