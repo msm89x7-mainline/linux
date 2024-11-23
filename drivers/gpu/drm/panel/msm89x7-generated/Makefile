@@ -2,6 +2,7 @@ obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_INX) += panel-motorola-cedric-nt3
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_TIANMA) += panel-motorola-cedric-nt35596-tianma.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_MONTANA_NT35596_INX) += panel-motorola-montana-nt35596-inx.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_MONTANA_R63350_TIANMA) += panel-motorola-montana-r63350-tianma.o
+obj-$(CONFIG_DRM_PANEL_NOKIA_ND1_NT35521S) += panel-nokia-nd1-nt35521s.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_HX8394F_BOE) += panel-xiaomi-land-hx8394f-boe.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_ILI9881C_TIANMA) += panel-xiaomi-land-ili9881c-tianma.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_NT35521S_EBBG) += panel-xiaomi-land-nt35521s-ebbg.o
