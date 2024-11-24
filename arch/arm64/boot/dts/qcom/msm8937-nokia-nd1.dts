@@ -22,6 +22,7 @@
 
 	aliases {
 		serial0 = &blsp1_uart2;
+        display0 = &framebuffer0;
 	};
 
 	chosen {
@@ -29,25 +30,15 @@
 		#size-cells = <2>;
 		ranges;
 
-		stdout-path = "framebuffer0";
+		stdout-path = "display0";
 
-		framebuffer0: framebuffer@90001000 {
+		framebuffer0: framebuffer@90000000 {
 			compatible = "simple-framebuffer";
-			reg = <0x0 0x90001000 0x0 (720 * 1280 * 3)>;
+			reg = <0x0 0x90000000 0x0 (720 * 1280 * 3)>;
 			width = <720>;
 			height = <1280>;
 			stride = <(720 * 3)>;
 			format = "r8g8b8";
-
-			clocks = <&gcc GCC_MDSS_AHB_CLK>,
-				 <&gcc GCC_MDSS_AXI_CLK>,
-				 <&gcc GCC_MDSS_VSYNC_CLK>,
-				 <&gcc GCC_MDSS_MDP_CLK>,
-				 <&gcc GCC_MDSS_BYTE0_CLK>,
-				 <&gcc GCC_MDSS_PCLK0_CLK>,
-				 <&gcc GCC_MDSS_ESC0_CLK>;
-			power-domains = <&gcc MDSS_GDSC>;
-			status = "disabled";
 		};
 	};
 
@@ -63,16 +54,17 @@
 	};
 
 	reserved-memory {
+        /* QSEECOM */
 		/delete-node/ reserved@85b00000;
 
-		/* QSEECOM */
+		
 		reserved@84a00000 {
 			reg = <0x0 0x84a00000 0x0 0x1900000>;
 			no-map;
 		};
 
-		framebuffer_mem: memory@90001000 {
-			reg = <0x0 0x90001000 0x0 (720 * 1280 * 3)>;
+		framebuffer_mem: framebuffer@90000000 {
+			reg = <0x0 0x90000000 0x0 (720 * 1280 * 3)>;
 			no-map;
 		};
 	};
@@ -89,6 +81,106 @@
 
 };
 
+
+// START Tounchscreen
+&blsp_i2c3 {
+    status = "okay";
+    novatek@62 {
+        compatible = "novatek,NVT-ts";
+        reg = <0x62>;
+        interrupt-parent = <&tlmm>;
+        interrupts = <65 0x2008>;  // IRQ number and flags
+        vdd-supply = <&nt_tp_iovdd_vreg>;  // VDDIO
+        avdd-supply = <&nt_tp_avdd_vreg>;  // VDD
+        pinctrl-names = "default", "sleep";
+        pinctrl-0 = <&ts_int_active &ts_reset_active>;
+        pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
+        novatek,reset-gpio = <&tlmm 64 0>;  // GPIO number and flags
+        novatek,irq-gpio = <&tlmm 65 0>;  // GPIO number and flags
+    };
+};
+
+&soc {
+    /*
+        Defined External LDO via fixed regulator driver control
+    */
+
+    nt_tp_avdd_vreg: regulator_tp_avdd {
+        status = "okay";
+        compatible = "regulator-fixed";
+        regulator-name = "nt_tp_avdd_vreg";
+        regulator-min-microvolt = <2800000>;
+        regulator-max-microvolt = <2800000>;
+        startup-delay-us = <100>;
+        enable-active-high;
+        gpio = <&tlmm 47 0>;
+    };
+
+    nt_tp_iovdd_vreg: regulator_tp_iovdd {
+        status = "okay";
+        compatible = "regulator-fixed";
+        regulator-name = "nt_tp_iovdd_vreg";
+        regulator-min-microvolt = <1800000>;
+        regulator-max-microvolt = <1800000>;
+        startup-delay-us = <100>;
+        enable-active-high;
+        gpio = <&tlmm 46 0>;
+    };
+};
+
+&tlmm {
+    /* Pin configuration for touchscreen */
+    pinctrl-names = "default", "sleep";
+
+    ts_int_active: ts_int_active {
+        mux {
+            pins = "gpio65";
+            function = "gpio";
+        };
+        config {
+            pins = "gpio65";
+            drive-strength = <8>;
+            bias-pull-up;
+        };
+    };
+
+    ts_int_suspend: ts_int_suspend {
+        mux {
+            pins = "gpio65";
+            function = "gpio";
+        };
+        config {
+            pins = "gpio65";
+            drive-strength = <2>;
+            bias-pull-down;
+        };
+    };
+
+    ts_reset_active: ts_reset_active {
+        mux {
+            pins = "gpio64";
+            function = "gpio";
+        };
+        config {
+            pins = "gpio64";
+            drive-strength = <8>;
+            bias-pull-up;
+        };
+    };
+
+    ts_reset_suspend: ts_reset_suspend {
+        mux {
+            pins = "gpio64";
+            function = "gpio";
+        };
+        config {
+            pins = "gpio64";
+            drive-strength = <2>;
+            bias-pull-down;
+        };
+    };
+};
+// END Tounchscreen
 
 &blsp1_uart2 {
 	status = "okay";
@@ -107,7 +199,7 @@
 	vdda-supply = <&pm8937_l2>;
 	vddio-supply = <&pm8937_l6>;
 	panel@0 {
-		compatible = "nokia,nd1-panel";
+		compatible = "nokia,nd1-nt35521s";
 		reg = <0>;
 
 		reset-gpios = <&tlmm 60 GPIO_ACTIVE_LOW>;
@@ -311,4 +403,10 @@
 
 &wcnss_mem {
 	status = "okay";
+};
+
+/* Modem */
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5000000>;
+    status = "disabled";
 };
