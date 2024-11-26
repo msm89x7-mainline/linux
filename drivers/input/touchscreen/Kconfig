@@ -12,8 +12,6 @@ menuconfig INPUT_TOUCHSCREEN
 
 if INPUT_TOUCHSCREEN
 
-source "drivers/input/touchscreen/novatek/Kconfig"
-
 config TOUCHSCREEN_88PM860X
 	tristate "Marvell 88PM860x touchscreen"
 	depends on MFD_88PM860X
@@ -706,6 +704,17 @@ config TOUCHSCREEN_NOVATEK_NVT_TS
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called novatek-nvt-ts.
+
+config TOUCHSCREEN_NOVATEK_NT11206
+	tristate "Novatek NT11206 touchscreen support"
+	depends on I2C
+	help
+	  Say Y here if you have a Novatek NT11206 touchscreen.
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called NVT-ts.
+
 
 config TOUCHSCREEN_IMAGIS
 	tristate "Imagis touchscreen support"
@@ -1441,14 +1450,5 @@ config TOUCHSCREEN_HIMAX_HX83112B
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called himax_hx83112b.
-
-menuconfig TOUCHSCREEN_NT11206
-	bool "Novatek NT11206"
-	default y
-	help
-	  Say Y here if you have a Novatek NT11206 touchscreen connected
-	  to your system.
-
-	  If unsure, say N.
 
 endif
