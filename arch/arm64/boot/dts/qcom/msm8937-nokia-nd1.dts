@@ -98,11 +98,6 @@
 		vcc-supply = <&regulator_ts_vcc>;
 		iovcc-supply = <&regulator_ts_iovcc>;
 
-		// Pin control
-        pinctrl-0 = <&ts_int_default &ts_reset_default>;
-        pinctrl-1 = <&ts_int_sleep &ts_reset_sleep>;
-        pinctrl-names = "default", "sleep";
-		
 		// GPIO
 		reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
 		irq-gpios = <&tlmm 65 GPIO_ACTIVE_HIGH>;
@@ -137,60 +132,6 @@
         gpio = <&tlmm 46 0>;
     };
 };
-
-&tlmm {
-    /* Pin configuration for touchscreen */
-    pinctrl-names = "default", "sleep";
-
-    ts_int_default: ts_int_default {
-        mux {
-            pins = "gpio65";
-            function = "gpio";
-        };
-        config {
-            pins = "gpio65";
-            drive-strength = <8>;
-            bias-pull-up;
-        };
-    };
-
-    ts_int_sleep: ts_int_sleep {
-        mux {
-            pins = "gpio65";
-            function = "gpio";
-        };
-        config {
-            pins = "gpio65";
-            drive-strength = <2>;
-            bias-pull-down;
-        };
-    };
-
-    ts_reset_default: ts_reset_default {
-        mux {
-            pins = "gpio64";
-            function = "gpio";
-        };
-        config {
-            pins = "gpio64";
-            drive-strength = <8>;
-            bias-pull-up;
-        };
-    };
-
-    ts_reset_sleep: ts_reset_sleep {
-        mux {
-            pins = "gpio64";
-            function = "gpio";
-        };
-        config {
-            pins = "gpio64";
-            drive-strength = <2>;
-            bias-pull-down;
-        };
-    };
-};
-// END Tounchscreen
 
 &blsp1_uart2 {
 	status = "okay";

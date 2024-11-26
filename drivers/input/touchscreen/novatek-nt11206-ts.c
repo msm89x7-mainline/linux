@@ -26,33 +26,15 @@
  */
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/time.h>
 #include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/printk.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/irq.h>
-#include <linux/gpio.h>
-#include <linux/proc_fs.h>
-#include <linux/unistd.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <asm/uaccess.h>
-#include <linux/slab.h>
-#include <linux/input/mt.h>
-#include <linux/of_gpio.h>
-#include <linux/of_irq.h>
-#include <linux/notifier.h>
-#include <linux/fb.h>
+#include <linux/time.h>
 #include <linux/regulator/consumer.h>
-#include <linux/seq_file.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/input/mt.h>
 
 #define DEVICE_NAME "NVTflash"
 #define I2C_FW_Address 0x01
@@ -110,6 +92,8 @@ typedef enum {
 
 int32_t novatek_i2c_read(struct i2c_client *client, uint16_t address,
 			 uint8_t *buf, uint16_t len);
+int32_t novatek_i2c_read_dummy(struct i2c_client *client, uint16_t address);
+
 int32_t novatek_i2c_write(struct i2c_client *client, uint16_t address,
 			  uint8_t *buf, uint16_t len);
 
@@ -126,24 +110,26 @@ int32_t novatek_i2c_write(struct i2c_client *client, uint16_t address,
  */
 int32_t novatek_i2c_read(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
 {
-    struct i2c_msg msgs[2];
-
-	msgs[0].flags = !I2C_M_RD; // Write message flag
-	msgs[0].addr = address; // I2C address to write to
-	msgs[0].buf = &buf[0]; // Buffer containing the address to read from
-	msgs[0].len = 1; // Length of the write message
-
-	msgs[1].flags = I2C_M_RD; // Read message flag
-	msgs[1].addr = address; // I2C address to read from
-	msgs[1].buf = &buf[1]; // Buffer to store the read data
-	msgs[1].len = len - 1; // Length of the read message
-
-
-    // Perform I2C transfer
-    int error = i2c_transfer(client->adapter, msgs, 2);
-    if (error < 0) {
-        return error;
-    }
+	struct i2c_msg msg[2] = {
+		{
+			.addr = address,
+            .flags = !I2C_M_RD,
+			.len = 1,
+			.buf = &buf[0],
+		},
+		{
+			.addr = address,
+			.flags = I2C_M_RD,
+			.len = len - 1,
+			.buf = &buf[1],
+		}
+	};
+    int error = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
+	if (error != ARRAY_SIZE(msg)) {
+		dev_err(&client->dev, "I2C read error: %d\n", error);
+		return (error < 0) ? error : -EIO;
+	}
+	dev_info(&client->dev, "Read %d bytes from register 0x%02x: %*ph", count, reg, count, data);
 
     return 0;
 }
@@ -164,27 +150,13 @@ int32_t novatek_i2c_read_dummy(struct i2c_client *client, uint16_t address)
 	struct i2c_msg msg;
 	uint8_t buf[8] = { 0 };
 	int32_t error = -1;
-	int32_t retries = 0;
 
 	msg.flags = I2C_M_RD; // Read message flag
 	msg.addr = address; // I2C address to read from
 	msg.len = 1; // Length of the read message
 	msg.buf = buf; // Buffer to store the read data
 
-	while (retries < 5) {
-		error = i2c_transfer(client->adapter, &msg, 1);
-		if (error == 1) // Successfully transferred the read message
-			break;
-		retries++;
-	}
-
-	if (unlikely(retries == 5)) {
-		dev_err(&client->dev,
-			"%s: Dummy I2C read failed after %d retries\n",
-			__func__, retries);
-		error = -EIO;
-	}
-
+    error = i2c_transfer(client->adapter, &msg, 1);
 	if (error == 1) {
 		dev_dbg(&client->dev, "Dummy read 1 byte from 0x%02x: %*ph\n",
 			address, 1, buf);
@@ -213,13 +185,13 @@ int32_t novatek_i2c_write(struct i2c_client *client, uint16_t address, uint8_t *
 	msg.buf = buf; // Buffer containing the data to write
 
     // Perform I2C transfer
+    dev_info(&client->dev, "Writing %d bytes to register 0x%02x: %*ph", len, address, len, buf);
     int error = i2c_transfer(client->adapter, &msg, 1);
     if (error < 0) {
-        dev_err(&client->dev, "%s: I2C write failed, error %d\n", __func__, error);
+        dev_err(&client->dev, "I2C write error: %d\n", error);
         return error;
     }
 
-    dev_dbg(&client->dev, "Write %d bytes to 0x%02x: %*ph\n", len, address, len, buf);
     return 0;
 }
 
@@ -352,10 +324,9 @@ static irqreturn_t novatek_touchscreen_irq_handler(int32_t irq, void *dev_id)
 static int nvt_ts_probe(struct i2c_client *client)
 {	
 	struct device *dev = &client->dev;
-    int error, width, height, irq_type;
+    int error;
     struct device_node *np = dev->of_node;
     const struct nvt_ts_i2c_chip_data *chip;
-    struct input_dev *input;
     uint8_t buf[8] = { 0 };
 
     // Validate inputs
@@ -367,15 +338,17 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     // Allocate and zero-initialize memory for touchscreen device data
     data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-    if (!data)
+    if (!data) {
         return -ENOMEM;
+    }
 
     data->client = client;
     i2c_set_clientdata(client, data);
 
     chip = device_get_match_data(dev);
-    if (!chip)
+    if (!chip) {
         return -EINVAL;
+    }
 
     dev_info(dev, "Chip detected: wake_type=0x%02x, chip_id=0x%02x\n",
              chip->wake_type, chip->chip_id);
@@ -428,11 +401,11 @@ static int nvt_ts_probe(struct i2c_client *client)
         return error;
     }
 
-    error = devm_gpio_request_one(dev, data->irq_gpio, GPIOF_IN, "NVT-int");
-    if (error) {
-        dev_err(dev, "Failed to request IRQ GPIO: %d\n", error);
-        return error;
-    }
+    // Log de éxito
+    dev_info(dev, "Reset GPIO: %d, IRQ GPIO: %d\n", data->reset_gpio, data->irq_gpio);
+    dev_info(dev, "Reset GPIO: %d, IRQ GPIO: %d\n", data->reset_gpio, data->irq_gpio);
+
+
 
     // Delay 10ms after Power-On Reset (POR) to ensure device stability
     msleep(10);
@@ -459,7 +432,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     buf[0] = 0xFF;
     buf[1] = 0x01;
     buf[2] = 0xF0;
-    error = novatek_i2c_write(data->client, 0x01, buf, 3);
+    error = novatek_i2c_write(data->client, I2C_FW_Address, buf, 3);
     if (error < 0) {
         dev_err(dev, "Failed to write index: %d\n", error);
         return error;
@@ -468,7 +441,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     // Read hw chip id
     buf[0] = 0x00;
     buf[1] = 0x00;
-    error = novatek_i2c_read(data->client, 0x01, buf, 3);
+    error = novatek_i2c_read(data->client, I2C_FW_Address, buf, 3);
     if (error < 0) {
         dev_err(dev, "Failed to read chip ID: %d\n", error);
         return error;
@@ -549,6 +522,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     msleep(5);
 
     // Bootloader reset
+    dev_info(dev, "Resetting bootloader\n");
     buf[0] = 0x00;
     buf[1] = 0x69;
     error = novatek_i2c_write(data->client, I2C_HW_Address, buf, 2);
@@ -561,6 +535,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     msleep(35);
 
     // Check firmware reset state
+    dev_info(dev, "Checking reset state\n");
     while (1) {
         msleep(10);
 
