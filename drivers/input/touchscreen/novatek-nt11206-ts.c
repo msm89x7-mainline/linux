@@ -44,7 +44,19 @@
 #define TOUCH_MAX_HEIGHT 1280
 #define TOUCH_MAX_FINGER_NUM 10
 
-uint8_t buffer_i2c_full[100] = { 0 };
+// I2C Analysis
+uint8_t read_buffer[2000] = { 0 };
+
+static int read_index = 1;
+module_param(read_index, int, 0644);
+MODULE_PARM_DESC(read_index, "Index of data to read via I2C");
+
+static int read_length = 256;
+module_param(read_length, int, 0644);
+MODULE_PARM_DESC(read_length, "Length of data to read via I2C");
+
+
+
 /**
  * struct nvt_ts_data - Comprehensive touchscreen device state management
  * 
@@ -130,11 +142,13 @@ int32_t novatek_i2c_read(struct i2c_client *client, uint16_t address, uint8_t *b
 		dev_err(&client->dev, "I2C read error: %d\n", error);
 		return (error < 0) ? error : -EIO;
 	}
-    dev_info(&client->dev, "Read %d bytes from register 0x%02x: %*ph", len - 1, address, len - 1, data);
+
+    dev_info(&client->dev, "Read %d bytes from register 0x%02x: %*ph", len - 1, address, len - 1, buf);
 
     return 0;
 }
 
+    
 /**
  * novatek_i2c_read_dummy - Perform a dummy read to wake up the Novatek CTP device.
  * @client: Pointer to the I2C client structure.
@@ -315,6 +329,13 @@ static irqreturn_t novatek_touchscreen_irq_handler(int32_t irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+
+static void probe_i2c(struct device *dev, struct i2c_client *client, const char *message) 
+{
+    dev_info(dev, "%s", message);
+    novatek_i2c_read(client, read_index, read_buffer, read_length);
+}
+
 /**
  * nvt_ts_probe - Probe function for the Novatek touchscreen driver.
  * @client: Pointer to the I2C client structure.
@@ -329,6 +350,8 @@ static int nvt_ts_probe(struct i2c_client *client)
     struct device_node *np = dev->of_node;
     const struct nvt_ts_i2c_chip_data *chip;
     uint8_t buf[8] = { 0 };
+    
+    probe_i2c(dev, client, "#1");
 
     // Validate inputs
     if (!client->irq) {
@@ -346,13 +369,12 @@ static int nvt_ts_probe(struct i2c_client *client)
     data->client = client;
     i2c_set_clientdata(client, data);
 
+    probe_i2c(dev, client, "#2");
+
     chip = device_get_match_data(dev);
     if (!chip) {
         return -EINVAL;
     }
-
-    dev_info(dev, "Chip detected: wake_type=0x%02x, chip_id=0x%02x\n",
-             chip->wake_type, chip->chip_id);
 
     // Configure power regulators
     data->vcc = devm_regulator_get(dev, "vcc");
@@ -382,6 +404,8 @@ static int nvt_ts_probe(struct i2c_client *client)
         return error;
     }
 
+    probe_i2c(dev, client, "#3");
+
     // Request GPIO pins
     data->reset_gpio = of_get_named_gpio(np, "reset-gpios", 0);
     data->irq_gpio = of_get_named_gpio(np, "irq-gpios", 0);
@@ -391,6 +415,8 @@ static int nvt_ts_probe(struct i2c_client *client)
                 data->reset_gpio, data->irq_gpio);
         return -EINVAL;
     }
+
+    probe_i2c(dev, client, "#4");
 
     error = devm_gpio_request_one(dev, data->reset_gpio, GPIOF_OUT_INIT_HIGH,
                                 "NVT-rst");
@@ -402,12 +428,16 @@ static int nvt_ts_probe(struct i2c_client *client)
     // Delay 10ms after Power-On Reset (POR) to ensure device stability
     msleep(10);
 
+    probe_i2c(dev, client, "#5");
+
     // Perform dummy read to resume touchscreen before sending commands
     error = novatek_i2c_read_dummy(client, I2C_FW_Address);
     if (error < 0) {
         dev_err(dev, "Dummy read failed: %d\n", error);
         return error;
     }
+
+    probe_i2c(dev, client, "#6");
 
     // Reset idle to keep default addr 0x01 to read chipid
     buf[0] = 0x00;
@@ -419,6 +449,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     }
 
     msleep(10);
+    probe_i2c(dev, client, "#7");
 
     // Write i2c index to 0x1F000
     buf[0] = 0xFF;
@@ -429,6 +460,8 @@ static int nvt_ts_probe(struct i2c_client *client)
         dev_err(dev, "Failed to write index: %d\n", error);
         return error;
     }
+
+    probe_i2c(dev, client, "#8");
 
     // Read hw chip id
     buf[0] = 0x00;
@@ -444,6 +477,8 @@ static int nvt_ts_probe(struct i2c_client *client)
         return -ENODEV;
     }
 
+    probe_i2c(dev, client, "#9");
+
     // Mutex initialization
     mutex_init(&data->lock);
 
@@ -454,13 +489,11 @@ static int nvt_ts_probe(struct i2c_client *client)
         return -ENOMEM;
     }
 
-    dev_info(dev, "#1 Init\n");
-    novatek_i2c_read(data->client, 0x01, buffer_i2c_full, 65);
+    probe_i2c(dev, client, "#10");
 
     INIT_WORK(&data->novatek_work, novatek_touchscreen_work_func);
 
-    dev_info(dev, "#2 Started novatek_touchscreen_work_func\n");
-    novatek_i2c_read(data->client, 0x01, buffer_i2c_full, 65);
+    probe_i2c(dev, client, "#11");
 
     // Allocate input device
     data->input_dev = devm_input_allocate_device(dev);
@@ -469,8 +502,7 @@ static int nvt_ts_probe(struct i2c_client *client)
         return -ENOMEM;
     }
 
-    dev_info(dev, "#3 Started devm_input_allocate_device\n");
-    novatek_i2c_read(data->client, 0x01, buffer_i2c_full, 65);
+    probe_i2c(dev, client, "#12");
 
     // Set input device parameters
     data->input_dev->evbit[0] = BIT_MASK(EV_SYN) | BIT_MASK(EV_KEY) |
@@ -497,6 +529,8 @@ static int nvt_ts_probe(struct i2c_client *client)
         return error;
     }
 
+    probe_i2c(dev, client, "#13");
+
     // Set up IRQ
     client->irq = gpio_to_irq(data->irq_gpio);
     if (client->irq <= 0) {
@@ -504,12 +538,16 @@ static int nvt_ts_probe(struct i2c_client *client)
         return -EINVAL;
     }
 
+    probe_i2c(dev, client, "#14");
+
     error = devm_request_irq(dev, client->irq, novatek_touchscreen_irq_handler,
                           IRQ_TYPE_EDGE_RISING, NOVATEK_TS_NAME, data);
     if (error) {
         dev_err(dev, "Failed to request IRQ: %d\n", error);
         return error;
     }
+
+    probe_i2c(dev, client, "#15");
 
     // Device reset sequence
     mutex_lock(&data->lock);
@@ -523,6 +561,8 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     msleep(5);
 
+    probe_i2c(dev, client, "#16");
+
     // Bootloader reset
     dev_info(dev, "Resetting bootloader\n");
     buf[0] = 0x00;
@@ -535,6 +575,8 @@ static int nvt_ts_probe(struct i2c_client *client)
     }
 
     msleep(35);
+
+    probe_i2c(dev, client, "#17");
 
     // Check firmware reset state
     dev_info(dev, "Checking reset state\n");
@@ -554,13 +596,16 @@ static int nvt_ts_probe(struct i2c_client *client)
             break;
     }
 
+    probe_i2c(dev, client, "#18");
+
     mutex_unlock(&data->lock);
 
     enable_irq(client->irq);
     dev_info(dev, "Probe completed successfully\n");
 
     dev_info(dev, "# Final read\n");
-    novatek_i2c_read(data->client, 0x01, buffer_i2c_full, 65);
+
+    probe_i2c(dev, client, "#19");
 
     return 0;
 }
