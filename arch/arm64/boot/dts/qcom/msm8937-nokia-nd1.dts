@@ -99,7 +99,7 @@
 		iovcc-supply = <&regulator_ts_iovcc>;
 
 		// GPIO
-		reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 64 GPIO_ACTIVE_HIGH>;
 		irq-gpios = <&tlmm 65 GPIO_ACTIVE_HIGH>;
 
 		// Other
