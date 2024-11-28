@@ -73,7 +73,6 @@ struct nvt_ts_data {
 	struct mutex lock;
 	struct regulator *vcc;
 	struct regulator *iovcc;
-    struct gpio_desc *irq_gpio;
     struct gpio_desc *reset_gpio;
 	int8_t phys[32];
 
@@ -419,12 +418,10 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     // Request GPIO descriptors using the new gpiod API
     data->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_ASIS);
-    data->irq_gpio = devm_gpiod_get(dev, "irq", GPIOD_ASIS);
 
-    if (IS_ERR(data->reset_gpio) || IS_ERR(data->irq_gpio)) {
-        dev_err(dev, "Failed to request GPIOs: reset=%ld, irq=%ld\n",
-                PTR_ERR(data->reset_gpio), PTR_ERR(data->irq_gpio));
-        return PTR_ERR(data->reset_gpio) ? : PTR_ERR(data->irq_gpio);
+    if (IS_ERR(data->reset_gpio) ) {
+        dev_err(dev, "Failed to request GPIOs: reset=%ld\n", PTR_ERR(data->reset_gpio));
+        return PTR_ERR(data->reset_gpio);
     }
     if (!data->reset_gpio) {
         dev_err(dev, "Failed to get reset GPIO\n");
@@ -559,12 +556,6 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     probe_i2c(dev, client, "#13");
 
-    // Map the IRQ GPIO to an IRQ number
-    client->irq = gpiod_to_irq(data->irq_gpio);
-    if (client->irq <= 0) {
-        dev_err(dev, "Failed to map GPIO to IRQ\n");
-        return -EINVAL;
-    }
 
     probe_i2c(dev, client, "#14");
 
