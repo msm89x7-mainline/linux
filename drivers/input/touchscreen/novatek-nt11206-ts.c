@@ -73,8 +73,8 @@ struct nvt_ts_data {
 	struct mutex lock;
 	struct regulator *vcc;
 	struct regulator *iovcc;
-	int32_t irq_gpio;
-	int32_t reset_gpio;
+    struct gpio_desc *irq_gpio;
+    struct gpio_desc *reset_gpio;
 	int8_t phys[32];
 
 };
@@ -322,11 +322,23 @@ XFER_ERROR:
  */
 static irqreturn_t novatek_touchscreen_irq_handler(int32_t irq, void *dev_id)
 {
-	disable_irq_nosync(data->client->irq);
+    struct nvt_ts_data *data = dev_id;
 
-	queue_work(data->novatek_workqueue, &data->novatek_work);
+    if (!data || !data->client) {
+        pr_err("novatek: Invalid data or client in IRQ handler\n");
+        return IRQ_NONE;
+    }
 
-	return IRQ_HANDLED;
+    dev_info(&data->client->dev, "Interrupt received\n");
+    disable_irq_nosync(data->client->irq);
+
+    if (data->novatek_workqueue) {
+        queue_work(data->novatek_workqueue, &data->novatek_work);
+    } else {
+        pr_err("novatek: Workqueue is NULL in IRQ handler\n");
+    }
+
+    return IRQ_HANDLED;
 }
 
 
@@ -347,7 +359,6 @@ static int nvt_ts_probe(struct i2c_client *client)
 {	
 	struct device *dev = &client->dev;
     int error;
-    struct device_node *np = dev->of_node;
     const struct nvt_ts_i2c_chip_data *chip;
     uint8_t buf[8] = { 0 };
     
@@ -406,22 +417,29 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     probe_i2c(dev, client, "#3");
 
-    // Request GPIO pins
-    data->reset_gpio = of_get_named_gpio(np, "reset-gpios", 0);
-    data->irq_gpio = of_get_named_gpio(np, "irq-gpios", 0);
+    // Request GPIO descriptors using the new gpiod API
+    data->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_ASIS);
+    data->irq_gpio = devm_gpiod_get(dev, "irq", GPIOD_ASIS);
 
-    if (!gpio_is_valid(data->reset_gpio) || !gpio_is_valid(data->irq_gpio)) {
-        dev_err(dev, "Invalid GPIO pins: reset=%d, irq=%d\n",
-                data->reset_gpio, data->irq_gpio);
-        return -EINVAL;
+    if (IS_ERR(data->reset_gpio) || IS_ERR(data->irq_gpio)) {
+        dev_err(dev, "Failed to request GPIOs: reset=%ld, irq=%ld\n",
+                PTR_ERR(data->reset_gpio), PTR_ERR(data->irq_gpio));
+        return PTR_ERR(data->reset_gpio) ? : PTR_ERR(data->irq_gpio);
+    }
+    if (!data->reset_gpio) {
+        dev_err(dev, "Failed to get reset GPIO\n");
+        return -ENODEV;
     }
 
+    msleep(50);
     probe_i2c(dev, client, "#4");
 
-    error = devm_gpio_request_one(dev, data->reset_gpio, GPIOF_OUT_INIT_HIGH,
-                                "NVT-rst");
+    // Configure the reset GPIO as output with an initial high value
+    error = gpiod_direction_output(data->reset_gpio, 1); 
     if (error) {
-        dev_err(dev, "Failed to request reset GPIO: %d\n", error);
+        dev_err(dev, "Failed to configure reset GPIO: %d\n", error);
+        regulator_disable(data->iovcc);
+        regulator_disable(data->vcc);
         return error;
     }
 
@@ -431,15 +449,19 @@ static int nvt_ts_probe(struct i2c_client *client)
     probe_i2c(dev, client, "#5");
 
     // Perform dummy read to resume touchscreen before sending commands
+    dev_info(dev, "Performing dummy read to resume touchscreen\n");
     error = novatek_i2c_read_dummy(client, I2C_FW_Address);
     if (error < 0) {
         dev_err(dev, "Dummy read failed: %d\n", error);
+        regulator_disable(data->iovcc);
+        regulator_disable(data->vcc);
         return error;
     }
 
     probe_i2c(dev, client, "#6");
 
     // Reset idle to keep default addr 0x01 to read chipid
+    dev_info(dev, "Reset idle to keep default addr 0x01 to read chipid\n");
     buf[0] = 0x00;
     buf[1] = 0xA5;
     error = novatek_i2c_write(data->client, I2C_HW_Address, buf, 2);
@@ -448,10 +470,11 @@ static int nvt_ts_probe(struct i2c_client *client)
         return error;
     }
 
-    msleep(10);
+    msleep(100);
     probe_i2c(dev, client, "#7");
 
     // Write i2c index to 0x1F000
+    dev_info(dev, "Writing index to 0x1F000\n");
     buf[0] = 0xFF;
     buf[1] = 0x01;
     buf[2] = 0xF0;
@@ -464,6 +487,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     probe_i2c(dev, client, "#8");
 
     // Read hw chip id
+    dev_info(dev, "Reading chip ID\n");
     buf[0] = 0x00;
     buf[1] = 0x00;
     error = novatek_i2c_read(data->client, I2C_FW_Address, buf, 3);
@@ -486,6 +510,8 @@ static int nvt_ts_probe(struct i2c_client *client)
     data->novatek_workqueue = create_singlethread_workqueue("novatek_workqueue");
     if (!data->novatek_workqueue) {
         dev_err(dev, "Failed to create workqueue\n");
+        regulator_disable(data->iovcc);
+        regulator_disable(data->vcc);
         return -ENOMEM;
     }
 
@@ -499,6 +525,8 @@ static int nvt_ts_probe(struct i2c_client *client)
     data->input_dev = devm_input_allocate_device(dev);
     if (!data->input_dev) {
         dev_err(dev, "Failed to allocate input device\n");
+        regulator_disable(data->iovcc);
+        regulator_disable(data->vcc);
         return -ENOMEM;
     }
 
@@ -531,8 +559,8 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     probe_i2c(dev, client, "#13");
 
-    // Set up IRQ
-    client->irq = gpio_to_irq(data->irq_gpio);
+    // Map the IRQ GPIO to an IRQ number
+    client->irq = gpiod_to_irq(data->irq_gpio);
     if (client->irq <= 0) {
         dev_err(dev, "Failed to map GPIO to IRQ\n");
         return -EINVAL;
@@ -552,14 +580,12 @@ static int nvt_ts_probe(struct i2c_client *client)
     // Device reset sequence
     mutex_lock(&data->lock);
 
-    gpio_set_value(data->reset_gpio, 1);
-    msleep(20);
-    gpio_set_value(data->reset_gpio, 0);
-    msleep(20);
-    gpio_set_value(data->reset_gpio, 1);
-    msleep(20);
-
-    msleep(5);
+    gpiod_set_value(data->reset_gpio, 1);
+    msleep(50);
+    gpiod_set_value(data->reset_gpio, 0);
+    msleep(50);
+    gpiod_set_value(data->reset_gpio, 1);
+    msleep(100);
 
     probe_i2c(dev, client, "#16");
 
@@ -570,8 +596,8 @@ static int nvt_ts_probe(struct i2c_client *client)
     error = novatek_i2c_write(data->client, I2C_HW_Address, buf, 2);
     if (error < 0) {
         dev_err(dev, "Bootloader reset failed: %d\n", error);
-        mutex_unlock(&data->lock);
-        return error;
+            mutex_unlock(&data->lock);
+            return error;
     }
 
     msleep(35);
@@ -580,6 +606,7 @@ static int nvt_ts_probe(struct i2c_client *client)
 
     // Check firmware reset state
     dev_info(dev, "Checking reset state\n");
+    unsigned long timeout = jiffies + msecs_to_jiffies(5000); // 5 seconds timeout
     while (1) {
         msleep(10);
 
@@ -594,13 +621,18 @@ static int nvt_ts_probe(struct i2c_client *client)
 
         if ((buf[1] >= RESET_STATE_INIT) && (buf[1] < 0xFF))
             break;
+
+        if (time_after(jiffies, timeout)) {
+            dev_err(dev, "Timeout while waiting for reset state\n");
+            mutex_unlock(&data->lock);
+            return -ETIMEDOUT;
+        }
     }
 
     probe_i2c(dev, client, "#18");
 
-    mutex_unlock(&data->lock);
 
-    enable_irq(client->irq);
+    mutex_unlock(&data->lock);
     dev_info(dev, "Probe completed successfully\n");
 
     dev_info(dev, "# Final read\n");
