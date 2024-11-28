@@ -93,16 +93,9 @@
         compatible = "novatek,nt11206-ts";
         reg = <0x62>;
 		interrupts-extended = <&tlmm 65 IRQ_TYPE_EDGE_RISING>;
-
-		// Voltage supply
 		vcc-supply = <&regulator_ts_vcc>;
 		iovcc-supply = <&regulator_ts_iovcc>;
-
-		// GPIO
 		reset-gpios = <&tlmm 64 GPIO_ACTIVE_HIGH>;
-		irq-gpios = <&tlmm 65 GPIO_ACTIVE_HIGH>;
-
-		// Other
 		touchscreen-size-x = <720>;
 		touchscreen-size-y = <1280>;
     };

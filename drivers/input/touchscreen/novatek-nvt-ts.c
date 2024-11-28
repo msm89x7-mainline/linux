@@ -43,6 +43,17 @@
 #define NVT_TS_TOUCH_UPDATE		2
 #define NVT_TS_TOUCH_RELEASE		3
 
+// I2C Analysis
+uint8_t read_buffer[2000] = { 0 };
+
+static int read_index = 1;
+module_param(read_index, int, 0644);
+MODULE_PARM_DESC(read_index, "Index of data to read via I2C");
+
+static int read_length = 256;
+module_param(read_length, int, 0644);
+MODULE_PARM_DESC(read_length, "Length of data to read via I2C");
+
 static const int nvt_ts_irq_type[4] = {
 	IRQF_TRIGGER_RISING,
 	IRQF_TRIGGER_FALLING,
@@ -82,15 +93,49 @@ static int nvt_ts_read_data(struct i2c_client *client, u8 reg, u8 *data, int cou
 			.buf = data,
 		}
 	};
+
+	int error = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
+	if (error != ARRAY_SIZE(msg)) {
+		dev_err(&client->dev, "I2C read error: %d\n", error);
+		return (error < 0) ? error : -EIO;
+	}
+	dev_info(&client->dev, "Read %d bytes from register 0x%02x: %*ph", count, reg, count, data);
+
+	return 0;
+}
+
+static int nvt_ts_write_data(struct i2c_client *client, u8 reg, const u8 *data, int count)
+{
+	struct i2c_msg msg = {
+		.addr = client->addr,
+		.len = count + 1,
+		.buf = kmalloc(count + 1, GFP_KERNEL),
+	};
 	int ret;
 
-	ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-	if (ret != ARRAY_SIZE(msg)) {
+	if (!msg.buf)
+		return -ENOMEM;
+
+	/* Log the write request */
+	dev_info(&client->dev, "Writing %d bytes to register 0x%02x: %*ph", count, reg, count, data);
+
+	/* First byte is the register address */
+	msg.buf[0] = reg;
+	/* Copy data after the register address */
+	memcpy(msg.buf + 1, data, count);
+
+	ret = i2c_transfer(client->adapter, &msg, 1);
+	
+	kfree(msg.buf);
+
+	if (ret != 1) {
+		dev_err(&client->dev, "I2C write error: %d\n", ret);
 		return (ret < 0) ? ret : -EIO;
 	}
 
 	return 0;
 }
+
 
 static irqreturn_t nvt_ts_irq(int irq, void *dev_id)
 {
@@ -252,10 +297,10 @@ static int nvt_ts_probe(struct i2c_client *client)
     }
 
     /* Wait for controller to come out of reset before params read */
-    msleep(100);
+	msleep(100);
 	error = nvt_ts_read_data(data->client, NVT_TS_PARAMETERS_START,
-				 data->buf, NVT_TS_PARAMS_SIZE);
-    gpiod_set_value_cansleep(data->reset_gpio, 1); /* Put back in reset */
+		data->buf, NVT_TS_PARAMS_SIZE);
+	gpiod_set_value_cansleep(data->reset_gpio, 1); /* Put back in reset */
     regulator_bulk_disable(ARRAY_SIZE(data->regulators), data->regulators);
     if (error)
         return error;
@@ -264,7 +309,7 @@ static int nvt_ts_probe(struct i2c_client *client)
     height = get_unaligned_be16(&data->buf[NVT_TS_PARAMS_HEIGHT]);
     data->max_touches = data->buf[NVT_TS_PARAMS_MAX_TOUCH];
     irq_type = data->buf[NVT_TS_PARAMS_IRQ_TYPE];
-
+	
     if (width > NVT_TS_MAX_SIZE || height >= NVT_TS_MAX_SIZE ||
         data->max_touches > NVT_TS_MAX_TOUCHES ||
         irq_type >= ARRAY_SIZE(nvt_ts_irq_type) ||
