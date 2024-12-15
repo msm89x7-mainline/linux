@@ -22,6 +22,20 @@
 	qcom,msm-id = <QCOM_ID_MSM8917 0>;
 	qcom,board-id = <0x1000b 2>, <0x2000b 2>;
 
+	pwm_backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pm8937_pwm 0 100000>;
+
+		pinctrl-0 = <&pwm_pwr_en_default>;
+		pinctrl-names = "default";
+
+		brightness-levels = <0 255>;
+		num-interpolated-steps = <255>;
+		default-brightness-level = <128>;
+
+		enable-gpios = <&pm8937_gpios 8 GPIO_ACTIVE_LOW>;
+	};
+
 	battery: battery {
 		compatible = "simple-battery";
 		charge-full-design-microamp-hours = <3000000>;
@@ -56,7 +70,12 @@
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
+			status = "disabled";
 		};
+	};
+
+	usb_vbus: extcon-usb-dummy {
+		compatible = "linux,extcon-usb-dummy";
 	};
 
 	gpio-keys {
@@ -91,6 +110,36 @@
 		framebuffer_mem: memory@90001000 {
 			reg = <0x0 0x90001000 0x0 (720 * 1280 * 3)>;
 			no-map;
+		};
+	};
+};
+
+&blsp1_i2c2 {
+	status = "okay";
+
+	regulator@3e {
+		compatible = "ti,tps65132";
+		reg = <0x3e>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&tps65132_en_default>;
+
+		reg_lcd_pos: outp {
+			regulator-name = "outp";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-boot-on;
+			regulator-always-on;
+			enable-gpios = <&tlmm 126 GPIO_ACTIVE_HIGH>;
+			regulator-active-discharge = <1>;
+		};
+
+		reg_lcd_neg: outn {
+			regulator-name = "outn";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			enable-gpios = <&tlmm 127 GPIO_ACTIVE_HIGH>;
+			regulator-active-discharge = <1>;
 		};
 	};
 };
@@ -130,7 +179,70 @@
 		input-voltage-limit-microvolt = <4400000>;
 		input-current-limit-microamp = <1000000>;
 		monitored-battery = <&battery>;
+
+		// TODO: remove when power-supplies property is fixed
+		omit-battery-class;
 	};
+};
+
+&gpu {
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	vdda-supply = <&pm8937_l2>;
+	vddio-supply = <&pm8937_l6>;
+
+	pinctrl-0 = <&mdss_dsi_default>;
+	pinctrl-0 = <&mdss_dsi_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	panel@0 {
+		compatible = "xiaomi,riva-panel";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 60 GPIO_ACTIVE_LOW>;
+
+		vsn-supply = <&reg_lcd_neg>;
+		vsp-supply = <&reg_lcd_pos>;
+
+		backlight = <&pwm_backlight>;
+
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vddio-supply = <&pm8937_l6>;
+	qcom,dsi-phy-regulator-ldo-mode;
+};
+
+&pm8937_gpios {
+	pwm_pwr_en_default: pwm-pwr-en-default-state {
+		pins = "gpio8";
+		function = "dtest2";
+		output-low;
+		bias-disable;
+		qcom,drive-strength = <2>;
+	};
+};
+
+&pm8937_pwm {
+	status = "okay";
 };
 
 &pm8937_resin {
@@ -297,11 +409,33 @@
 		bias-pull-up;
 	};
 
+	mdss_dsi_default: mdss-dsi-default-state {
+		pins = "gpio60";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	mdss_dsi_sleep: mdss-dsi-sleep-state {
+		pins = "gpio60";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
 	sdc2_cd_default: sdc2-cd-default-state {
 		pins = "gpio67";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	tps65132_en_default: tps65132-en-default-state {
+		function = "gpio";
+		pins = "gpio126", "gpio127";
+		drive-strength = <2>;
+		bias-pull-down;
 	};
 
 	tsp_int_rst_default: tsp-int-rst-default-state {
@@ -310,6 +444,25 @@
 		drive-strength = <8>;
 		bias-pull-up;
 	};
+};
+
+&usb {
+	dr_mode = "peripheral";
+	extcon = <&usb_vbus>;
+	status = "okay";
+};
+
+&usb_hs_phy {
+	/*
+	 * Driver is not able to set init-seq
+	 * qcom,init-seq = /bits/ 8 <0x0 0x53>,
+	 *                          <0x1 0x39>,
+	 *                          <0x2 0x37>;
+	 */
+	vdd-supply = <&pm8937_l2>;
+	vdda1p8-supply = <&pm8937_l7>;
+	vdda3p3-supply = <&pm8937_l13>;
+	status = "okay";
 };
 
 &wcnss {
