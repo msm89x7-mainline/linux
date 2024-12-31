@@ -374,7 +374,7 @@
 };
 
 &sdhc_2 {
-	cd-gpios = <&tlmm 67 GPIO_ACTIVE_LOW>;
+	cd-gpios = <&tlmm 67 GPIO_ACTIVE_HIGH>;
 	vmmc-supply = <&pm8937_l11>;
 	vqmmc-supply = <&pm8937_l12>;
 	pinctrl-0 = <&sdc2_default &sdc2_cd_default>;
