@@ -2208,12 +2208,6 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	if (err)
 		return err;
 
-	if (smmu->impl && unlikely(smmu->impl->prepare)) {
-	    err = smmu->impl->prepare(smmu);
-	    if (err)
-		    return err;
-	}
-
 	err = arm_smmu_device_cfg_probe(smmu);
 	if (err)
 		return err;
@@ -2324,12 +2318,6 @@ static int __maybe_unused arm_smmu_runtime_resume(struct device *dev)
 	ret = clk_bulk_enable(smmu->num_clks, smmu->clks);
 	if (ret)
 		return ret;
-
-	if (smmu->impl && unlikely(smmu->impl->prepare)) {
-	    ret = smmu->impl->prepare(smmu);
-	    if (ret)
-		    return ret;
-	}
 
 	arm_smmu_device_reset(smmu);
 
