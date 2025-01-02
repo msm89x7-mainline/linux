@@ -7,6 +7,7 @@
 #include <linux/gpio/consumer.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
+#include <linux/regulator/consumer.h>
 
 #include <video/mipi_display.h>
 
@@ -18,7 +19,13 @@
 struct ili9881c_ebbg {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
+	struct regulator_bulk_data *supplies;
 	struct gpio_desc *reset_gpio;
+};
+
+static const struct regulator_bulk_data ili9881c_ebbg_supplies[] = {
+	{ .supply = "vsn" },
+	{ .supply = "vsp" },
 };
 
 static inline struct ili9881c_ebbg *to_ili9881c_ebbg(struct drm_panel *panel)
@@ -40,37 +47,19 @@ static int ili9881c_ebbg_on(struct ili9881c_ebbg *ctx)
 {
 	struct mipi_dsi_multi_context dsi_ctx = { .dsi = ctx->dsi };
 
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00, 0xff);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x04);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x04);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xe5, 0x00);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00);
 	mipi_dsi_usleep_range(&dsi_ctx, 10000, 11000);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00);
-	mipi_dsi_usleep_range(&dsi_ctx, 10000, 11000);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x11, 0x00);
-	mipi_dsi_msleep(&dsi_ctx, 180);
+	mipi_dsi_msleep(&dsi_ctx, 150);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x29, 0x00);
 	mipi_dsi_dcs_set_tear_on_multi(&dsi_ctx, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
 	mipi_dsi_usleep_range(&dsi_ctx, 10000, 11000);
-	mipi_dsi_dcs_set_display_brightness_multi(&dsi_ctx, 0xff0f);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY,
-				     0x2c);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_POWER_SAVE, 0x00);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x68, 0x05);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_SET_CABC_MIN_BRIGHTNESS,
-				     0x00, 0xff);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x03);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x03);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_MEMORY_START,
 				     0x0c);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x02);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x02);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x04, 0x16);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x05, 0x22);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x06, 0x40);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x07, 0x04);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00);
 
 	return dsi_ctx.accum_err;
@@ -80,7 +69,6 @@ static int ili9881c_ebbg_off(struct ili9881c_ebbg *ctx)
 {
 	struct mipi_dsi_multi_context dsi_ctx = { .dsi = ctx->dsi };
 
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0x98, 0x81, 0x00);
 	mipi_dsi_dcs_set_display_off_multi(&dsi_ctx);
 	mipi_dsi_usleep_range(&dsi_ctx, 10000, 11000);
@@ -96,12 +84,19 @@ static int ili9881c_ebbg_prepare(struct drm_panel *panel)
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
+	ret = regulator_bulk_enable(ARRAY_SIZE(ili9881c_ebbg_supplies), ctx->supplies);
+	if (ret < 0) {
+		dev_err(dev, "Failed to enable regulators: %d\n", ret);
+		return ret;
+	}
+
 	ili9881c_ebbg_reset(ctx);
 
 	ret = ili9881c_ebbg_on(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		regulator_bulk_disable(ARRAY_SIZE(ili9881c_ebbg_supplies), ctx->supplies);
 		return ret;
 	}
 
@@ -119,16 +114,17 @@ static int ili9881c_ebbg_unprepare(struct drm_panel *panel)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	regulator_bulk_disable(ARRAY_SIZE(ili9881c_ebbg_supplies), ctx->supplies);
 
 	return 0;
 }
 
 static const struct drm_display_mode ili9881c_ebbg_mode = {
-	.clock = (720 + 114 + 8 + 180) * (1280 + 10 + 4 + 18) * 60 / 1000,
+	.clock = (720 + 116 + 8 + 180) * (1280 + 10 + 4 + 18) * 60 / 1000,
 	.hdisplay = 720,
-	.hsync_start = 720 + 114,
-	.hsync_end = 720 + 114 + 8,
-	.htotal = 720 + 114 + 8 + 180,
+	.hsync_start = 720 + 116,
+	.hsync_end = 720 + 116 + 8,
+	.htotal = 720 + 116 + 8 + 180,
 	.vdisplay = 1280,
 	.vsync_start = 1280 + 10,
 	.vsync_end = 1280 + 10 + 4,
@@ -160,6 +156,13 @@ static int ili9881c_ebbg_probe(struct mipi_dsi_device *dsi)
 	if (!ctx)
 		return -ENOMEM;
 
+	ret = devm_regulator_bulk_get_const(dev,
+					    ARRAY_SIZE(ili9881c_ebbg_supplies),
+					    ili9881c_ebbg_supplies,
+					    &ctx->supplies);
+	if (ret < 0)
+		return ret;
+
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio))
 		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
@@ -172,7 +175,7 @@ static int ili9881c_ebbg_probe(struct mipi_dsi_device *dsi)
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
 			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_NO_EOT_PACKET |
-			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
+			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
 
 	drm_panel_init(&ctx->panel, dev, &ili9881c_ebbg_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
@@ -205,7 +208,7 @@ static void ili9881c_ebbg_remove(struct mipi_dsi_device *dsi)
 }
 
 static const struct of_device_id ili9881c_ebbg_of_match[] = {
-	{ .compatible = "xiaomi,santoni-ili9881c-ebbg" }, // FIXME
+	{ .compatible = "xiaomi,rolex-ili9881c-ebbg" }, // FIXME
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, ili9881c_ebbg_of_match);
@@ -214,12 +217,12 @@ static struct mipi_dsi_driver ili9881c_ebbg_driver = {
 	.probe = ili9881c_ebbg_probe,
 	.remove = ili9881c_ebbg_remove,
 	.driver = {
-		.name = "panel-xiaomi-santoni-ili9881c-ebbg",
+		.name = "panel-xiaomi-rolex-ili9881c-ebbg",
 		.of_match_table = ili9881c_ebbg_of_match,
 	},
 };
 module_mipi_dsi_driver(ili9881c_ebbg_driver);
 
 MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
-MODULE_DESCRIPTION("DRM driver for ili9881c_HD720p_video_Ebbg");
+MODULE_DESCRIPTION("DRM driver for ili9881c_HD720p_video_Ebbg_c3a");
 MODULE_LICENSE("GPL");

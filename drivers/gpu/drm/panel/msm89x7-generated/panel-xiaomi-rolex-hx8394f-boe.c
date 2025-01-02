@@ -7,8 +7,7 @@
 #include <linux/gpio/consumer.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
-
-#include <video/mipi_display.h>
+#include <linux/regulator/consumer.h>
 
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
@@ -18,7 +17,13 @@
 struct hx8394f_boe {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
+	struct regulator_bulk_data *supplies;
 	struct gpio_desc *reset_gpio;
+};
+
+static const struct regulator_bulk_data hx8394f_boe_supplies[] = {
+	{ .supply = "vsn" },
+	{ .supply = "vsp" },
 };
 
 static inline struct hx8394f_boe *to_hx8394f_boe(struct drm_panel *panel)
@@ -47,15 +52,6 @@ static int hx8394f_boe_on(struct hx8394f_boe *ctx)
 	mipi_dsi_msleep(&dsi_ctx, 120);
 	mipi_dsi_dcs_set_display_on_multi(&dsi_ctx);
 	mipi_dsi_msleep(&dsi_ctx, 20);
-	mipi_dsi_dcs_set_display_brightness_multi(&dsi_ctx, 0x00ff);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xc9,
-				     0x13, 0x00, 0x13, 0x1e, 0x31, 0x1e, 0x00,
-				     0x91, 0x00);
-	mipi_dsi_usleep_range(&dsi_ctx, 5000, 6000);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_POWER_SAVE, 0x00);
-	mipi_dsi_usleep_range(&dsi_ctx, 5000, 6000);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY,
-				     0x2c);
 
 	return dsi_ctx.accum_err;
 }
@@ -80,12 +76,19 @@ static int hx8394f_boe_prepare(struct drm_panel *panel)
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
+	ret = regulator_bulk_enable(ARRAY_SIZE(hx8394f_boe_supplies), ctx->supplies);
+	if (ret < 0) {
+		dev_err(dev, "Failed to enable regulators: %d\n", ret);
+		return ret;
+	}
+
 	hx8394f_boe_reset(ctx);
 
 	ret = hx8394f_boe_on(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		regulator_bulk_disable(ARRAY_SIZE(hx8394f_boe_supplies), ctx->supplies);
 		return ret;
 	}
 
@@ -103,6 +106,7 @@ static int hx8394f_boe_unprepare(struct drm_panel *panel)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	regulator_bulk_disable(ARRAY_SIZE(hx8394f_boe_supplies), ctx->supplies);
 
 	return 0;
 }
@@ -143,6 +147,13 @@ static int hx8394f_boe_probe(struct mipi_dsi_device *dsi)
 	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
+
+	ret = devm_regulator_bulk_get_const(dev,
+					    ARRAY_SIZE(hx8394f_boe_supplies),
+					    hx8394f_boe_supplies,
+					    &ctx->supplies);
+	if (ret < 0)
+		return ret;
 
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio))
@@ -189,7 +200,7 @@ static void hx8394f_boe_remove(struct mipi_dsi_device *dsi)
 }
 
 static const struct of_device_id hx8394f_boe_of_match[] = {
-	{ .compatible = "xiaomi,santoni-hx8394f-boe" }, // FIXME
+	{ .compatible = "xiaomi,rolex-hx8394f-boe" }, // FIXME
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, hx8394f_boe_of_match);
@@ -198,12 +209,12 @@ static struct mipi_dsi_driver hx8394f_boe_driver = {
 	.probe = hx8394f_boe_probe,
 	.remove = hx8394f_boe_remove,
 	.driver = {
-		.name = "panel-xiaomi-santoni-hx8394f-boe",
+		.name = "panel-xiaomi-rolex-hx8394f-boe",
 		.of_match_table = hx8394f_boe_of_match,
 	},
 };
 module_mipi_dsi_driver(hx8394f_boe_driver);
 
 MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
-MODULE_DESCRIPTION("DRM driver for hx8394F_HD720p_video_BOE");
+MODULE_DESCRIPTION("DRM driver for hx8394F_HD720p_video_BOE_c3a");
 MODULE_LICENSE("GPL");
