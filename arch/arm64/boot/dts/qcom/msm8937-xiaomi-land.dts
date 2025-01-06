@@ -12,6 +12,8 @@
 #include "pm8937.dtsi"
 #include "pmi8950.dtsi"
 
+/delete-node/ &qseecom_mem;
+
 / {
 	model = "Xiaomi Redmi 3S (land)";
 	compatible = "xiaomi,land", "qcom,msm8937";
@@ -73,9 +75,6 @@
 	};
 
 	reserved-memory {
-		/delete-node/ reserved@85b00000;
-
-		/* QSEECOM */
 		reserved@84a00000 {
 			reg = <0x0 0x84a00000 0x0 0x1900000>;
 			no-map;
