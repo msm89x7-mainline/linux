@@ -11,6 +11,7 @@
 #include "msm8937.dtsi"
 #include "pm8937.dtsi"
 #include "pmi8950.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 /delete-node/ &qseecom_mem;
 
@@ -26,6 +27,22 @@
 		serial0 = &blsp1_uart2;
 		mmc0 = &sdhc_1;
 		mmc1 = &sdhc_2;
+	};
+
+	headphones_switch: audio-switch {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&tlmm 94 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "Headphones Switch";
+		pinctrl-0 = <&headphones_switch_default>;
+		pinctrl-names = "default";
+	};
+
+	speaker_amp: audio-amplifier {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&tlmm 93 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "Speaker Amp";
+		pinctrl-0 = <&speaker_amp_default>;
+		pinctrl-names = "default";
 	};
 
 	chosen {
@@ -69,6 +86,13 @@
 		};
 	};
 
+	headphones-input-enable {
+		compatible = "regulator-fixed";
+		regulator-name = "headphones-input";
+		gpio = <&tlmm 95 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+	};
 
 	reserved-memory {
 		reserved@84f00000 {
@@ -92,6 +116,17 @@
 	};
 };
 
+&adsp {
+	status = "okay";
+};
+
+&adsp_mem {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
+};
 
 &blsp1_uart2 {
 	status = "okay";
@@ -154,6 +189,10 @@
 };
 
 &gpu {
+	status = "okay";
+};
+
+&lpass_codec{
 	status = "okay";
 };
 
@@ -365,6 +404,34 @@
 	clock-frequency = <32768>;
 };
 
+&sound {
+	model = "xiaomi-prada";
+
+	aux-devs = <&speaker_amp>, <&headphones_switch>;
+	widgets =
+		"Speaker", "Speaker",
+		"Headphone", "Headphones";
+	pin-switches = "Speaker", "Headphones";
+	audio-routing =
+		"Speaker", "Speaker Amp OUTL",
+		"Speaker", "Speaker Amp OUTR",
+		"Speaker Amp INL", "HPHR",
+		"Speaker Amp INR", "HPHR",
+		"Headphones", "Headphones Switch OUTL",
+		"Headphones", "Headphones Switch OUTR",
+		"Headphones Switch INL", "HPHL",
+		"Headphones Switch INR", "HPHR",
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS Internal2",
+		"AMIC3", "MIC BIAS External1",
+		"MM_DL1", "MultiMedia1 Playback",
+		"MM_DL3", "MultiMedia3 Playback",
+		"MM_DL4", "MultiMedia4 Playback",
+		"MultiMedia2 Capture", "MM_UL2";
+
+	status = "okay";
+};
+
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <20 4>;
 
@@ -373,6 +440,14 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-pull-up;
+	};
+
+	headphones_switch_default: headphones-switch-default-state {
+		pins = "gpio94";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+		output-low;
 	};
 
 	panel_default: panel-default-state {
@@ -388,6 +463,14 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	speaker_amp_default: speaker-amp-default-state {
+		pins = "gpio93";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+		output-low;
 	};
 
 	tsp_int_rst_default: tsp-int-rst-default-state {
@@ -408,6 +491,23 @@
 	vdd-supply = <&pm8937_l2>;
 	vdda1p8-supply = <&pm8937_l7>;
 	vdda3p3-supply = <&pm8937_l13>;
+	status = "okay";
+};
+
+&wcd_codec {
+	qcom,hphl-jack-type-normally-open;
+	/*
+	* MBHC values ​​are copied from xiaomi-markw dts.
+	* They are incorrect, but headphone and microphone detection works.
+	*/
+	qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
+	qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
+	qcom,micbias1-ext-cap;
+	qcom,micbias2-ext-cap;
+
+	vdd-cdc-io-supply = <&pm8937_l5>;
+	vdd-cdc-tx-rx-cx-supply = <&pm8937_s4>;
+	vdd-micbias-supply = <&pm8937_l13>;
 	status = "okay";
 };
 
