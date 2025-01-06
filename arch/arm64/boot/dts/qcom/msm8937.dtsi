@@ -229,7 +229,7 @@
 		#address-cells = <2>;
 		#size-cells = <2>;
 
-		reserved@85b00000 {
+		qseecom_mem: reserved@85b00000 {
 			reg = <0x0 0x85b00000 0x0 0x800000>;
 			no-map;
 		};
