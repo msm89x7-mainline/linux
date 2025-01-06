@@ -26,14 +26,9 @@
 		compatible = "pwm-backlight";
 		pwms = <&pm8937_pwm 0 100000>;
 
-		pinctrl-0 = <&pwm_pwr_en_default>;
-		pinctrl-names = "default";
-
 		brightness-levels = <0 255>;
 		num-interpolated-steps = <255>;
 		default-brightness-level = <128>;
-
-		enable-gpios = <&pm8937_gpios 8 GPIO_ACTIVE_LOW>;
 	};
 
 	battery: battery {
@@ -232,7 +227,7 @@
 };
 
 &pm8937_gpios {
-	pwm_pwr_en_default: pwm-pwr-en-default-state {
+	pwm_enable_default: pwm-enable-default-state {
 		pins = "gpio8";
 		function = "dtest2";
 		output-low;
@@ -242,6 +237,9 @@
 };
 
 &pm8937_pwm {
+	pinctrl-0 = <&pwm_enable_default>;
+	pinctrl-names = "default";
+
 	status = "okay";
 };
 
