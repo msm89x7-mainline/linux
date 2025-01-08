@@ -182,6 +182,7 @@
 
 	panel@0 {
 		compatible = "huawei,agassi-panel";
+		reg = <0>;
 
 		port {
 			panel_in: endpoint {
