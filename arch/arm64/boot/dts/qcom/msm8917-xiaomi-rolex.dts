@@ -157,7 +157,7 @@
 	vddio-supply = <&pm8937_l6>;
 
 	pinctrl-0 = <&mdss_dsi_default>;
-	pinctrl-0 = <&mdss_dsi_sleep>;
+	pinctrl-1 = <&mdss_dsi_sleep>;
 	pinctrl-names = "default", "sleep";
 
 	panel@0 {
