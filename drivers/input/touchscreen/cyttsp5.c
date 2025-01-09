@@ -558,7 +558,7 @@ static int cyttsp5_hid_output_get_sysinfo(struct cyttsp5 *ts)
 	rc = wait_for_completion_interruptible_timeout(&ts->cmd_done,
 						msecs_to_jiffies(CY_HID_OUTPUT_GET_SYSINFO_TIMEOUT_MS));
 	if (rc <= 0) {
-		dev_err(ts->dev, "HID output cmd execution timed out\n");
+		dev_err(ts->dev, "HID output get sysinfo cmd execution timed out\n");
 		rc = -ETIMEDOUT;
 		return rc;
 	}
@@ -632,7 +632,7 @@ static int cyttsp5_hid_output_bl_launch_app(struct cyttsp5 *ts)
 	rc = wait_for_completion_interruptible_timeout(&ts->cmd_done,
 				msecs_to_jiffies(CY_HID_OUTPUT_TIMEOUT_MS));
 	if (rc <= 0) {
-		dev_err(ts->dev, "HID output cmd execution timed out\n");
+		dev_err(ts->dev, "HID output bl launch app cmd execution timed out\n");
 		rc = -ETIMEDOUT;
 		return rc;
 	}
