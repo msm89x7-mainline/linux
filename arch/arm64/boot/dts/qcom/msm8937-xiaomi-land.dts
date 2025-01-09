@@ -28,6 +28,15 @@
 		mmc1 = &sdhc_2;
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+
+		charge-full-design-microamp-hours = <4100000>;
+		constant-charge-current-max-microamp = <1000000>;
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4400000>;
+	};
+
 	chosen {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -53,6 +62,10 @@
 			power-domains = <&gcc MDSS_GDSC>;
 			status = "disabled";
 		};
+	};
+
+	usb_vbus: extcon-usb-dummy {
+		compatible = "linux,extcon-usb-dummy";
 	};
 
 	gpio-keys {
@@ -189,8 +202,19 @@
 	status = "okay";
 };
 
+&pmi8950_fg {
+	monitored-battery = <&battery>;
+	power-supplies = <&pmi8950_smbcharger>;
+	status = "okay";
+};
+
 &pm8937_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
+};
+
+&pmi8950_smbcharger {
+	monitored-battery = <&battery>;
 	status = "okay";
 };
 
@@ -201,10 +225,6 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
-};
-
-&pmi8950_usb_vbus {
-	status = "okay";
 };
 
 &pmi8950_wled {
@@ -407,7 +427,7 @@
 
 &usb {
 	dr_mode = "peripheral";
-	extcon = <&pmi8950_usb_vbus>;
+	extcon = <&usb_vbus>;
 	status = "okay";
 };
 
