@@ -1,5 +1,8 @@
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_INX) += panel-motorola-cedric-nt35596-inx.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_TIANMA) += panel-motorola-cedric-nt35596-tianma.o
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_HANNAH_599_DJN) += panel-motorola-hannah-599-djn.o
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_HANNAH_599_TIANMA) += panel-motorola-hannah-599-tianma.o
+obj-$(CONFIG_DRM_PANEL_MOTOROLA_HANNAH_600_DJN) += panel-motorola-hannah-600-djn.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_MONTANA_NT35596_INX) += panel-motorola-montana-nt35596-inx.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_MONTANA_R63350_TIANMA) += panel-motorola-montana-r63350-tianma.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_LAND_HX8394F_BOE) += panel-xiaomi-land-hx8394f-boe.o
