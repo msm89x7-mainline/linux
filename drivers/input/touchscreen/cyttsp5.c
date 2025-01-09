@@ -28,6 +28,7 @@
 #define CY_PIP_1P7_EMPTY_BUF			0xFF00
 #define CYTTSP5_PREALLOCATED_CMD_BUFFER		32
 #define CY_BITS_PER_BTN				1
+#define CY_CORE_STARTUP_RETRY_COUNT		10
 #define CY_NUM_BTN_EVENT_ID			GENMASK(CY_BITS_PER_BTN - 1, 0)
 
 #define MAX_AREA				255
@@ -824,8 +825,10 @@ static int cyttsp5_fill_all_touch(struct cyttsp5 *ts)
 
 static int cyttsp5_startup(struct cyttsp5 *ts)
 {
+	int retry = CY_CORE_STARTUP_RETRY_COUNT;
 	int error;
 
+reset:
 	error = cyttsp5_deassert_int(ts);
 	if (error) {
 		dev_err(ts->dev, "Error on deassert int r=%d\n", error);
@@ -834,6 +837,8 @@ static int cyttsp5_startup(struct cyttsp5 *ts)
 	error = cyttsp5_get_hid_descriptor(ts, &ts->hid_desc);
 	if (error < 0) {
 		dev_err(ts->dev, "Error on getting HID descriptor r=%d\n", error);
+		if (retry--)
+			goto reset;
 		return error;
 	}
 
@@ -845,17 +850,23 @@ static int cyttsp5_startup(struct cyttsp5 *ts)
 		error = cyttsp5_hid_output_bl_launch_app(ts);
 		if (error < 0) {
 			dev_err(ts->dev, "Error on launch app r=%d\n", error);
+			if (retry--)
+				goto reset;
 			return error;
 		}
 
 		error = cyttsp5_get_hid_descriptor(ts, &ts->hid_desc);
 		if (error < 0) {
 			dev_err(ts->dev, "Error on getting HID descriptor r=%d\n", error);
+			if (retry--)
+				goto reset;
 			return error;
 		}
 
 		if (ts->hid_desc.packet_id == HID_BL_REPORT_ID) {
 			dev_err(ts->dev, "Error on launch app still in bootloader\n");
+			if (retry--)
+				goto reset;
 			return -EPROTO;
 		}
 	}
@@ -863,12 +874,16 @@ static int cyttsp5_startup(struct cyttsp5 *ts)
 	error = cyttsp5_fill_all_touch(ts);
 	if (error < 0) {
 		dev_err(ts->dev, "Error on report descriptor r=%d\n", error);
+		if (retry--)
+			goto reset;
 		return error;
 	}
 
 	error = cyttsp5_hid_output_get_sysinfo(ts);
 	if (error) {
 		dev_err(ts->dev, "Error on getting sysinfo r=%d\n", error);
+		if (retry--)
+			goto reset;
 		return error;
 	}
 
