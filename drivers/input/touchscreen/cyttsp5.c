@@ -26,6 +26,7 @@
 #define CY_I2C_DATA_SIZE			(2 * 256)
 #define HID_VERSION				0x0100
 #define CY_MAX_INPUT				512
+#define CY_PIP_1P7_EMPTY_BUF			0xFF00
 #define CYTTSP5_PREALLOCATED_CMD_BUFFER		32
 #define CY_BITS_PER_BTN				1
 #define CY_NUM_BTN_EVENT_ID			GENMASK(CY_BITS_PER_BTN - 1, 0)
@@ -227,7 +228,11 @@ static int cyttsp5_read(struct cyttsp5 *ts, u8 *buf, u32 max)
 		return error;
 
 	size = get_unaligned_le16(temp);
-	if (!size || size == 2)
+	/*
+	 * Before PIP 1.7, empty buffer is 0x0002
+	 * From PIP 1.7, empty buffer is 0xFFXX
+	 */
+	if (!size || size == 2 || size >= CY_PIP_1P7_EMPTY_BUF)
 		return 0;
 
 	if (size > max)
@@ -707,7 +712,8 @@ static irqreturn_t cyttsp5_handle_irq(int irq, void *handle)
 	if (size == 0) {
 		/* reset */
 		report_id = 0;
-		size = 2;
+	} else if (size == 2 || size >= CY_PIP_1P7_EMPTY_BUF) {
+		return IRQ_HANDLED;
 	} else {
 		report_id = ts->input_buf[2];
 		size = min(size, CY_MAX_INPUT);
@@ -744,7 +750,7 @@ static int cyttsp5_deassert_int(struct cyttsp5 *ts)
 		return error;
 
 	size = get_unaligned_le16(&buf[0]);
-	if (size == 2 || size == 0)
+	if (size == 2 || size == 0 || size >= CY_PIP_1P7_EMPTY_BUF)
 		return 0;
 
 	return -EINVAL;
