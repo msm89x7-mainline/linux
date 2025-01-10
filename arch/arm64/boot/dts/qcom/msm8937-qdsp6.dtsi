@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025, Vasiliy Doylov (NekoCWD) <nekodevelopper@gmail.com>
+ */
+#include <dt-bindings/sound/qcom,q6voice.h>
+#include <dt-bindings/sound/qcom,q6afe.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
+
+&sound {
+	pinctrl-0 = <&cdc_pdm_lines_default>;
+	pinctrl-1 = <&cdc_pdm_lines_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	mm1-dai-link {
+		link-name = "MultiMedia1";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+	mm2-dai-link {
+		link-name = "MultiMedia2";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
+		};
+	};
+
+	mm3-dai-link {
+		link-name = "MultiMedia3";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA3>;
+		};
+	};
+
+	mm4-dai-link {
+		link-name = "MultiMedia4";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA4>;
+		};
+	};
+
+	primary-mi2s-dai-link {
+		link-name = "Primary MI2S";
+		cpu {
+			sound-dai = <&q6afedai PRIMARY_MI2S_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&lpass_codec 0>, <&wcd_codec 0>;
+		};
+	};
+
+	tertiary-mi2s-dai-link {
+		link-name = "Tertiary MI2S";
+		cpu {
+			sound-dai = <&q6afedai TERTIARY_MI2S_TX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&lpass_codec 1>, <&wcd_codec 1>;
+		};
+	};
+
+	voicemmode1-dai-link {
+		link-name = "VoiceMMode1";
+		cpu {
+			sound-dai = <&q6voicedai VOICEMMODE1>;
+		};
+	};
+};
+
+&tlmm {
+	cdc_pdm_lines_default: cdc-pdm-lines-default-state {
+		cdc-pdm-line1-pins {
+			pins = "gpio69", "gpio73", "gpio74";
+			function = "cdc_pdm0";
+			drive-strength = <8>;
+		};
+
+		cdc-pdm-line2-pins {
+			pins = "gpio70", "gpio71", "gpio72";
+			function = "cdc_pdm0";
+			drive-strength = <8>;
+		};
+	};
+
+	cdc_pdm_lines_sleep: cdc-pdm-lines-sleep-state {
+		cdc-pdm-line1-pins {
+			pins = "gpio69", "gpio73", "gpio74";
+			function = "cdc_pdm0";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		cdc-pdm-line2-pins {
+			pins = "gpio70", "gpio71", "gpio72";
+			function = "cdc_pdm0";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+};
