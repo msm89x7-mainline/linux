@@ -11,6 +11,7 @@
 #include <dt-bindings/leds/common.h>
 #include "msm8917.dtsi"
 #include "pm8937.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 / {
 	model = "Huawei Mediapad T3 10 (agassi)";
@@ -95,6 +96,18 @@
 
 };
 
+&adsp_mem {
+	status = "okay";
+};
+
+&adsp {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
+};
+
 &blsp1_i2c2 {
 	status = "okay";
 	charger: battery@14 {
@@ -165,6 +178,10 @@
 };
 
 &gpu {
+	status = "okay";
+};
+
+&lpass_codec{
 	status = "okay";
 };
 
@@ -353,6 +370,20 @@
 	clock-frequency = <32768>;
 };
 
+&sound {
+	model = "huawei-agassi";
+
+	audio-routing =
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS Internal2",
+		"MM_DL1", "MultiMedia1 Playback",
+		"MM_DL3", "MultiMedia3 Playback",
+		"MM_DL4", "MultiMedia4 Playback",
+		"MultiMedia2 Capture", "MM_UL2";
+
+	status = "okay";
+};
+
 &tlmm {
 	smb_int_default: smb-int-default-state {
 		pins = "gpio61";
@@ -404,6 +435,18 @@
 	status = "okay";
 };
 
+&wcd_codec {
+	qcom,hphl-jack-type-normally-open;
+	qcom,mbhc-vthreshold-high = <87 120 215 475 500>;
+	qcom,mbhc-vthreshold-low = <87 120 210 450 485>;
+	qcom,micbias2-ext-cap;
+
+	vdd-cdc-io-supply = <&pm8937_l5>;
+	vdd-cdc-tx-rx-cx-supply = <&pm8937_s4>;
+	vdd-micbias-supply = <&pm8937_l13>;
+	status = "okay";
+};
+
 &wcnss {
 	vddpx-supply = <&pm8937_l5>;
 	status = "okay";
@@ -424,4 +467,3 @@
 &xo_board {
 	clock-frequency = <19200000>;
 };
-
