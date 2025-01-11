@@ -4,6 +4,7 @@
 #include <dt-bindings/iio/qcom,spmi-vadc.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/spmi/spmi.h>
+#include <dt-bindings/leds/common.h>
 
 &spmi_bus {
 	pmic@2 {
@@ -184,6 +185,13 @@
 		reg = <0x3 SPMI_USID>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+
+		pmi8950_flash: led-controller@d300 {
+			compatible = "qcom,spmi-flash-led-v1";
+			reg = <0xd300 0x100>;
+
+			status = "disabled";
+		};
 
 		pmi8950_pwm: pwm {
 			compatible = "qcom,pmi8950-pwm";
