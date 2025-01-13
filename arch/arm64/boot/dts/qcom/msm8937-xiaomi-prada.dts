@@ -29,6 +29,15 @@
 		mmc1 = &sdhc_2;
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+
+		charge-full-design-microamp-hours = <4100000>;
+		constant-charge-current-max-microamp = <1000000>;
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4400000>;
+	};
+
 	headphones_switch: audio-switch {
 		compatible = "simple-audio-amplifier";
 		enable-gpios = <&tlmm 94 GPIO_ACTIVE_HIGH>;
@@ -288,7 +297,14 @@
 	};
 };
 
-&pmi8950_usb_vbus {
+&pmi8950_fg {
+	monitored-battery = <&battery>;
+	power-supplies = <&pmi8950_smbcharger>;
+	status = "okay";
+};
+
+&pmi8950_smbcharger {
+	monitored-battery = <&battery>;
 	status = "okay";
 };
 
@@ -527,8 +543,9 @@
 };
 
 &usb {
-	dr_mode = "peripheral";
-	extcon = <&pmi8950_usb_vbus>;
+	dr_mode = "otg";
+	extcon = <&pmi8950_smbcharger>, <&pmi8950_smbcharger>;
+	vbus-supply = <&otg_vbus>;
 	status = "okay";
 };
 
