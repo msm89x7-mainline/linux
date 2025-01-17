@@ -230,7 +230,7 @@
 		pinctrl-0 = <&tsp_int_rst_default>;
 		pinctrl-names = "default";
 
-		linux,keycodes = <KEY_APPSELECT KEY_HOME KEY_BACK>;
+		linux,keycodes = <KEY_BACK KEY_MENU KEY_CONTEXT_MENU>;
 	};
 };
 
