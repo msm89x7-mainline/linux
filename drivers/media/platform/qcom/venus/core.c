@@ -584,6 +584,106 @@ static const struct venus_resources msm8916_res = {
 	.fwname = "qcom/venus-1.8/venus.mbn",
 };
 
+static const struct freq_tbl msm8917_freq_table[] = {
+	{ 0, 360000000 },
+	{ 0, 329140000 },
+	{ 0, 308570000 },
+	{ 0, 270000000 },
+	{ 0, 200000000 },
+	{ 0, 160000000 },
+};
+
+static const struct bw_tbl msm8917_bw_table_enc[] = {
+	{ 244800, 841000, 0, 0, 0 }, /* 1080p30E   */
+	{ 216000, 740000, 0, 0, 0 }, /* 720p60E    */
+	{ 194400, 680000, 0, 0, 0 }, /* FWVGA120E  */
+	{ 144000, 496000, 0, 0, 0 }, /* VGA120E    */
+	{ 108000, 370000, 0, 0, 0 }, /* 720p30E    */
+	{ 97200, 340000, 0, 0, 0 }, /* FWVGA60E   */
+	{ 48600, 170000, 0, 0, 0 }, /* FWVGA30E   */
+	{ 72000, 248000, 0, 0, 0 }, /* VGA60E     */
+	{ 36000, 124000, 0, 0, 0 }, /* VGA30E     */
+	{ 18000, 70000, 0, 0, 0 }, /* QVGA60E    */
+	{ 9000, 35000, 0, 0, 0 }, /* QVGA30E    */
+};
+
+static const struct bw_tbl msm8917_bw_table_dec[] = {
+	{ 244800, 605000, 0, 0, 0 }, /* 1080p30D */
+	{ 216000, 540000, 0, 0, 0 }, /* 720p60D */
+	{ 194400, 484000, 0, 0, 0 }, /* FWVGA120D */
+	{ 144000, 360000, 0, 0, 0 }, /* VGA120D */
+	{ 108000, 270000, 0, 0, 0 }, /* 720p30D */
+	{ 97200, 242000, 0, 0, 0 }, /* FWVGA60D */
+	{ 48600, 121000, 0, 0, 0 }, /* FWVGA30D */
+	{ 72000, 180000, 0, 0, 0 }, /* VGA60D */
+	{ 36000, 90000, 0, 0, 0}, /* VGA30D */
+	{ 18000, 45000, 0, 0, 0}, /* HVGA30D */
+};
+
+static const struct venus_resources msm8917_res = {
+	.freq_tbl = msm8917_freq_table,
+	.freq_tbl_size = ARRAY_SIZE(msm8917_freq_table),
+	.reg_tbl = msm8916_reg_preset,
+	.reg_tbl_size = ARRAY_SIZE(msm8916_reg_preset),
+	.bw_tbl_enc = msm8917_bw_table_enc,
+	.bw_tbl_enc_size = ARRAY_SIZE(msm8917_bw_table_enc),
+	.bw_tbl_dec = msm8917_bw_table_dec,
+	.bw_tbl_dec_size = ARRAY_SIZE(msm8917_bw_table_dec),
+	.clks = {"core", "iface", "bus" },
+	.clks_num = 3,
+	.vcodec0_clks = { "vcodec_core0" },
+	.vcodec1_clks = { "vcodec_core0" },
+	.vcodec_clks_num = 1,
+	.vcodec_num = 1,
+	.max_load = 352800,  /* 1080p@30 + 720p@30 */
+	.hfi_version = HFI_VERSION_3XX,
+	.vmem_id = VIDC_RESOURCE_NONE,
+	.vmem_size = 0,
+	.vmem_addr = 0,
+	.cp_start = 0,
+	.cp_size = 0x5dc00000,
+	.cp_nonpixel_start = 0x1000000,
+	.cp_nonpixel_size = 0x24800000,
+	.dma_mask = 0xddc00000 - 1,
+	.fwname = "venus.mdt",
+};
+
+static const struct freq_tbl msm8937_freq_table[] = {
+	{ 0, 360000000 },
+	{ 0, 320000000 },
+	{ 0, 308571428 },
+	{ 0, 240000000 },
+	{ 0, 166150000 },
+};
+
+static const struct venus_resources msm8937_res = {
+	.freq_tbl = msm8917_freq_table,
+	.freq_tbl_size = ARRAY_SIZE(msm8937_freq_table),
+	.reg_tbl = msm8916_reg_preset,
+	.reg_tbl_size = ARRAY_SIZE(msm8916_reg_preset),
+	.bw_tbl_enc = msm8917_bw_table_enc,
+	.bw_tbl_enc_size = ARRAY_SIZE(msm8917_bw_table_enc),
+	.bw_tbl_dec = msm8917_bw_table_dec,
+	.bw_tbl_dec_size = ARRAY_SIZE(msm8917_bw_table_dec),
+	.clks = {"core", "iface", "bus" },
+	.clks_num = 3,
+	.vcodec0_clks = { "vcodec_core0" },
+	.vcodec1_clks = { "vcodec_core0" },
+	.vcodec_clks_num = 1,
+	.vcodec_num = 1,
+	.max_load = 352800,  /* 1080p@30 + 720p@30 */
+	.hfi_version = HFI_VERSION_3XX,
+	.vmem_id = VIDC_RESOURCE_NONE,
+	.vmem_size = 0,
+	.vmem_addr = 0,
+	.cp_start = 0,
+	.cp_size = 0x5dc00000,
+	.cp_nonpixel_start = 0x1000000,
+	.cp_nonpixel_size = 0x24800000,
+	.dma_mask = 0xddc00000 - 1,
+	.fwname = "venus.mdt",
+};
+
 static const struct freq_tbl msm8996_freq_table[] = {
 	{ 1944000, 520000000 },	/* 4k UHD @ 60 (decode only) */
 	{  972000, 520000000 },	/* 4k UHD @ 30 */
@@ -960,6 +1060,8 @@ static const struct venus_resources sc7280_res = {
 
 static const struct of_device_id venus_dt_match[] = {
 	{ .compatible = "qcom,msm8916-venus", .data = &msm8916_res, },
+	{ .compatible = "qcom,msm8917-venus", .data = &msm8917_res, },
+	{ .compatible = "qcom,msm8937-venus", .data = &msm8937_res, },
 	{ .compatible = "qcom,msm8996-venus", .data = &msm8996_res, },
 	{ .compatible = "qcom,msm8998-venus", .data = &msm8998_res, },
 	{ .compatible = "qcom,sdm660-venus", .data = &sdm660_res, },

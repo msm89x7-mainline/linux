@@ -416,6 +416,14 @@
 	};
 };
 
+&venus {
+	status = "okay";
+};
+
+&venus_mem {
+	status = "okay";
+};
+
 &usb {
 	dr_mode = "otg";
 	extcon = <&pmi8950_smbcharger>, <&usb_id>;
