@@ -1334,10 +1334,9 @@ static struct clk_rcg2 usb_hs_system_clk_src = {
 };
 
 static const struct freq_tbl ftbl_vcodec0_clk_src[] = {
-	F(133330000, P_GPLL0, 6, 0, 0),
-	F(180000000, P_GPLL6, 6, 0, 0),
-	F(228570000, P_GPLL0, 3.5, 0, 0),
-	F(266670000, P_GPLL0, 3, 0, 0),
+	F(160000000, P_GPLL0, 5, 0, 0),
+	F(200000000, P_GPLL0, 4, 0, 0),
+	F(270000000, P_GPLL6, 4, 0, 0),
 	F(308570000, P_GPLL6, 3.5, 0, 0),
 	F(329140000, P_GPLL4, 3.5, 0, 0),
 	F(360000000, P_GPLL6, 3, 0, 0),
