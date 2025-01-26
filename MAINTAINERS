@@ -6932,6 +6932,7 @@ M:	Daniel Scally <djrscally@gmail.com>
 L:	linux-media@vger.kernel.org
 S:	Maintained
 T:	git git://linuxtv.org/media.git
+F:	Documentation/devicetree/bindings/media/i2c/dongwoon,dw9719.yaml
 F:	drivers/media/i2c/dw9719.c
 
 DONGWOON DW9768 LENS VOICE COIL DRIVER
