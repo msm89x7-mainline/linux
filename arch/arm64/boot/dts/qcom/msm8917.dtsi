@@ -114,12 +114,14 @@
 		};
 
 		domain-idle-states {
-			cluster_sleep_0: cluster-sleep-0 {
+			cluster_pwrdn: cluster-sleep-0 {
 				compatible = "domain-idle-state";
-				arm,psci-suspend-param = <0x41000053>;
-				entry-latency-us = <700>;
-				exit-latency-us = <1000>;
-				min-residency-us = <6500>;
+				idle-state-name = "cluster-sleep-0";
+				arm,psci-suspend-param = <0x41000043>;
+				entry-latency-us = <240>;
+				exit-latency-us = <280>;
+				min-residency-us = <6000>;
+				local-timer-stop;
 			};
 		};
 
@@ -132,7 +134,7 @@
 				arm,psci-suspend-param = <0x40000003>;
 				entry-latency-us = <125>;
 				exit-latency-us = <180>;
-				min-residency-us = <595>;
+				min-residency-us = <2000>;
 				local-timer-stop;
 			};
 		};
@@ -186,10 +188,11 @@
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
+		force-psci-domains;
 
 		cluster_pd: power-domain-cluster {
 			#power-domain-cells = <0>;
-			domain-idle-states = <&cluster_sleep_0>;
+			domain-idle-states = <&cluster_pwrdn>;
 		};
 
 		cpu_pd0: power-domain-cpu0 {
