@@ -113,12 +113,27 @@
 		};
 
 		domain-idle-states {
-			cluster_sleep_0: cluster-sleep-0 {
+			/* Seems strange, but downstream msm8917-pm.dtsi specifies
+			   GHDS as faster than retention, unlike for other SoCs */
+
+			cluster_gdhs: cluster-gdhs {
 				compatible = "domain-idle-state";
-				arm,psci-suspend-param = <0x41000053>;
-				entry-latency-us = <700>;
-				exit-latency-us = <1000>;
-				min-residency-us = <6500>;
+				idle-state-name = "cluster-gdhs";
+				arm,psci-suspend-param = <0x41000043>;
+				entry-latency-us = <150>;
+				exit-latency-us = <280>;
+				min-residency-us = <560>;
+				local-timer-stop;
+			};
+
+			cluster_ret: cluster-retention {
+				compatible = "domain-idle-state";
+				idle-state-name = "cluster-ret";
+				arm,psci-suspend-param = <0x41000033>;
+				entry-latency-us = <120>;
+				exit-latency-us = <650>;
+				min-residency-us = <1300>;
+				local-timer-stop;
 			};
 		};
 
@@ -185,10 +200,11 @@
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
+		force-psci-domains;
 
 		cluster_pd: power-domain-cluster {
 			#power-domain-cells = <0>;
-			domain-idle-states = <&cluster_sleep_0>;
+			domain-idle-states = <&cluster_gdhs>, <&cluster_ret>;
 		};
 
 		cpu_pd0: power-domain-cpu0 {
