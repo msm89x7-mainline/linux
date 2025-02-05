@@ -555,6 +555,34 @@
 		drive-strength = <8>;
 		bias-pull-up;
 	};
+
+	cam_sensor_front_default: cam_sensor_front_default {
+		pins = "gpio40";
+		function = "gpio";
+		bias-disable;
+		drive-strength = <2>;
+	};
+
+	camss_mclk0_default: camss-mclk0-default-state {
+		pins = "gpio26";
+		function = "cam_mclk";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	camss_mclk1_default: camss-mclk1-default-state {
+		pins = "gpio27";
+		function = "cam_mclk";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	camss_mclk2_default: camss-mclk2-default-state {
+		pins = "gpio28";
+		function = "cam_mclk";
+		drive-strength = <2>;
+		bias-disable;
+	};
 };
 
 &usb {
@@ -608,4 +636,63 @@
 
 &xo_board {
 	clock-frequency = <19200000>;
+};
+
+&camss {
+	compatible = "qcom,msm8917-camss";
+	status = "okay";
+	vdda-supply = <&pm8937_s3>;
+
+	ports {
+		port@1 {
+			reg = <1>;
+			csiphy1_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				remote-endpoint = <&front_cam_ep>;
+			};
+		};
+	};
+};
+
+
+&cci {
+	pinctrl-names = "default";
+	pinctrl-0 = <&cci1_default>,
+				<&cci0_default>,
+				<&camss_mclk2_default>;
+
+	status = "okay";
+};
+
+&cci_i2c1 {
+	camera-sensor@36 { // Front camera
+		compatible = "ovti,ov5670";
+
+		reg = <0x36>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK2_CLK>;
+		clock-rates = <19200000>;
+
+		pinctrl-0 = <&cam_sensor_front_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+
+		avdd-supply = <&pm8937_l22>;
+		dvdd-supply = <&pm8937_l23>;
+		dovdd-supply = <&pm8937_l6>;
+		orientation = <0>;
+		rotation = <270>;
+
+		status = "okay";
+
+		port {
+			front_cam_ep: endpoint {
+				data-lanes = <0 1>;
+				remote-endpoint = <&csiphy1_ep>;
+				link-frequencies = /bits/ 64 <450000000>;
+			};
+		};
+	};
 };
