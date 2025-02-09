@@ -373,6 +373,7 @@
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
+		force-psci-domains;
 
 		cluster_pd: power-domain-cluster {
 			#power-domain-cells = <0>;
