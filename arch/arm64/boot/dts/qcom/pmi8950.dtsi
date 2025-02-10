@@ -94,6 +94,14 @@
 			status = "disabled";
 		};
 
+		pmi8950_atc_leds: leds@1243 {
+			compatible = "qcom,leds-atc";
+			reg = <0x1243>;
+			label = "charging";
+
+			status = "disabled";
+		};
+
 		pmi8950_usb_vbus: usb-detect@1300 {
 			compatible = "qcom,pm8941-misc";
 			reg = <0x1300>;

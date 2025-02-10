@@ -247,6 +247,10 @@
 	};
 };
 
+&pmi8950_atc_leds {
+	status = "okay";
+};
+
 &pmi8950_fg {
 	monitored-battery = <&battery>;
 	power-supplies = <&pmi8950_smbcharger>;
