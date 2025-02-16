@@ -183,6 +183,61 @@
 	};
 };
 
+&camss {
+	status = "okay";
+	vdda-supply = <&pm8937_l2>;
+
+	ports {
+		port@1 {
+			reg = <1>;
+			csiphy1_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				remote-endpoint = <&front_cam_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	pinctrl-names = "default";
+	pinctrl-0 = <&cci0_default>;
+
+	status = "okay";
+};
+
+&cci_i2c0 {
+	camera-sensor@36 { // Front camera
+		compatible = "ovti,ov5670";
+
+		reg = <0x36>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK2_CLK>;
+		clock-rates = <19200000>;
+
+		pinctrl-0 = <&cam_sensor_front_default>, <&camss_mclk2_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+
+		avdd-supply= <&pm8937_l22>;
+		dvdd-supply = <&pm8937_l23>;
+		dovdd-supply = <&pm8937_l6>;
+		orientation = <0>;
+		rotation = <270>;
+
+		status = "okay";
+
+		port {
+			front_cam_ep: endpoint {
+				data-lanes = <0 1>;
+				remote-endpoint = <&csiphy1_ep>;
+				link-frequencies = /bits/ 64 <450000000>;
+			};
+		};
+	};
+};
+
 &gpu {
 	status = "okay";
 };
@@ -252,6 +307,21 @@
 	status = "okay";
 };
 
+&pmi8950_flash {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	led@0 {
+		reg = <0>;
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_WHITE>;
+		led-max-microamp = <100000>;
+		flash-max-microamp = <595000>;
+		flash-max-timeout-us = <1280000>;
+	};
+};
+
 &pmi8950_smbcharger {
 	monitored-battery = <&battery>;
 	status = "okay";
@@ -310,7 +380,6 @@
 		pm8937_l6: l6 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
-			regulator-always-on;
 		};
 
 		pm8937_l7: l7 {
@@ -443,6 +512,13 @@
 
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <20 4>;
+
+	cam_sensor_front_default: cam-sensor-front-default-state {
+		pins = "gpio39", "gpio40";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 
 	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio91";
