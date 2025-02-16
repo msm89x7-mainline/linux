@@ -291,6 +291,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
 	switch (vfe->camss->res->version) {
 	case CAMSS_8x16:
 	case CAMSS_8x17:
+	case CAMSS_8x37:
 	case CAMSS_8x39:
 	case CAMSS_8x53:
 		switch (sink_code) {
