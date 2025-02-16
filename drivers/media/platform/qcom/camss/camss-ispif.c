@@ -1112,7 +1112,8 @@ int msm_ispif_subdev_init(struct camss *camss,
 	/* Number of ISPIF lines - same as number of CSID hardware modules */
 	if (camss->res->version == CAMSS_8x16)
 		ispif->line_num = 2;
-	else if (camss->res->version == CAMSS_8x17)
+	else if (camss->res->version == CAMSS_8x17 ||
+		 camss->res->version == CAMSS_8x37)
 		ispif->line_num = 3;
 	else if (camss->res->version == CAMSS_8x96 ||
 		 camss->res->version == CAMSS_8x53 ||
@@ -1131,7 +1132,8 @@ int msm_ispif_subdev_init(struct camss *camss,
 		ispif->line[i].id = i;
 
 		if (camss->res->version == CAMSS_8x16 ||
-		    camss->res->version == CAMSS_8x17) {
+		    camss->res->version == CAMSS_8x17 ||
+		    camss->res->version == CAMSS_8x37) {
 			ispif->line[i].formats = ispif_formats_8x16;
 			ispif->line[i].nformats =
 					ARRAY_SIZE(ispif_formats_8x16);
@@ -1169,6 +1171,7 @@ int msm_ispif_subdev_init(struct camss *camss,
 		ret = devm_request_irq(dev, ispif->irq, ispif_isr_8x16,
 			       IRQF_TRIGGER_RISING, ispif->irq_name, ispif);
 	else if (camss->res->version == CAMSS_8x17 ||
+		 camss->res->version == CAMSS_8x37 ||
 		 camss->res->version == CAMSS_8x53 ||
 		 camss->res->version == CAMSS_8x96 ||
 		 camss->res->version == CAMSS_660)
