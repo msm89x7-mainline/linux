@@ -147,6 +147,108 @@
 	status = "okay";
 };
 
+&camss {
+	vdda-supply = <&pm8937_l2>;
+	status = "okay";
+
+	ports {
+		port@0 {
+			reg = <0>;
+			csiphy0_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&rear_cam_ep>;
+			};
+		};
+		port@1 {
+			reg = <1>;
+			csiphy1_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				remote-endpoint = <&front_cam_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	pinctrl-names = "default";
+	pinctrl-0 = <&cci0_default>,
+		    <&cci1_default>,
+		    <&camss_mclk0_default>,
+		    <&camss_mclk1_default>;
+	status = "okay";
+};
+
+&cci_i2c0 {
+	focus_rear: vcm@c {
+		compatible = "dongwoon,dw9718s";
+		reg = <0x0c>;
+		vdd-supply = <&pm8937_l17>;
+	};
+
+	camera@10 {
+		compatible = "ovti,ov5675";
+		reg = <0x10>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK1_CLK>;
+		clock-rates = <19200000>;
+
+		pinctrl-0 = <&cam_sensor_front_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+
+		avdd-supply = <&pm8937_l22>;
+		dvdd-supply = <&pm8937_l23>;
+		dovdd-supply = <&pm8937_l6>;
+
+		orientation = <0>; /* Front */
+		rotation = <90>;
+
+		/* flash-leds = <&flash_front>; NOTYET: spmi-flash-led-v1 needs v4l2 support */
+
+		port {
+			front_cam_ep: endpoint {
+				data-lanes = <0 1>;
+				link-frequencies = /bits/ 64 <450000000>;
+				remote-endpoint = <&csiphy1_ep>;
+			};
+		};
+	};
+
+	camera@2d {
+		compatible = "samsung,s5k3l8";
+		reg = <0x2d>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		clock-frequency = <24000000>;
+
+		pinctrl-0 = <&cam_sensor_rear_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
+
+		avdd-supply = <&pm8937_l22>;
+		dvdd-supply = <&pm8937_l23>;
+		vio-supply = <&pm8937_l6>;
+		aux-supply = <&pm8937_l17>;
+
+		orientation = <1>; /* Rear */
+		rotation = <270>;
+
+		lens-focus = <&focus_rear>;
+		/* flash-leds = <&flash_rear>; NOTYET: spmi-flash-led-v1 needs v4l2 support */
+
+		port {
+			rear_cam_ep: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
+
 &blsp1_i2c2 {
 	clock-frequency = <400000>;
 	status = "okay";
@@ -251,6 +353,30 @@
 	monitored-battery = <&battery>;
 	power-supplies = <&pmi8950_smbcharger>;
 	status = "okay";
+};
+
+&pmi8950_flash {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	flash_rear: led@0 {
+		reg = <0>;
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_WHITE>;
+		led-max-microamp = <200000>;
+		flash-max-microamp = <1000000>;
+		flash-max-timeout-us = <1280000>;
+	};
+
+	flash_front: led@1 {
+		reg = <1>;
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_WHITE>;
+		led-max-microamp = <200000>;
+		flash-max-microamp = <1000000>;
+		flash-max-timeout-us = <1280000>;
+	};
 };
 
 &pmi8950_smbcharger {
@@ -428,6 +554,20 @@
 
 &tlmm {
 	gpio-reserved-ranges = <20 4>;
+
+	cam_sensor_rear_default: cam-sensor-rear-default-state {
+		pins = "gpio35";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cam_sensor_front_default: cam-sensor-front-default-state {
+		pins = "gpio40";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 
 	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio91";
