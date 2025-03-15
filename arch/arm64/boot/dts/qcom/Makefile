@@ -80,6 +80,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-motorola-hannah.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-motorola-montana.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-xiaomi-land.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-xiaomi-prada.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-readboy-g500x.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-alcatel-idol3.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-huawei-kiwi.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-longcheer-l9100.dtb
