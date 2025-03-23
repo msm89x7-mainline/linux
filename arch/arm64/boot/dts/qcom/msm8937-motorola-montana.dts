@@ -109,6 +109,23 @@
 		enable-active-high;
 	};
 
+	vreg_cam_rear_vana: vreg-cam-rear-vana {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_cam_rear_vana";
+		enable-active-high;
+		gpio = <&tlmm 39 GPIO_ACTIVE_HIGH>;
+	};
+
+	vreg_cam_rear_vio: vreg-cam-rear-vio {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_cam_rear_vio";
+		regulator-max-microvolt = <1800000>;
+		regulator-min-microvolt = <1800000>;
+		enable-active-high;
+		vin-supply = <&pm8937_l6>;
+		gpio = <&tlmm 27 GPIO_ACTIVE_HIGH>;
+	};
+
 	vph_pwr: vph-pwr-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vph_pwr";
@@ -151,6 +168,62 @@
 		syna,startup-delay-ms = <500>;
 	};
 };
+
+&camss {
+	vdda-supply = <&pm8937_l2>;
+	status = "okay";
+
+	ports {
+		port@0 {
+			reg = <0>;
+
+			csiphy0_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&rear_cam_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	pinctrl-0 = <&cci0_default>;
+	pinctrl-names = "default";
+
+	status = "okay";
+};
+
+&cci_i2c0 {
+	camera-sensor@2d {
+		compatible = "samsung,s5k3p3sx";
+
+		reg = <0x2d>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		clock-frequency = <24000000>;
+
+		pinctrl-0 = <&cam_sensor_rear_default>, <&camss_mclk0_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
+
+		avdd-supply= <&vreg_cam_rear_vana>;
+		dvdd-supply = <&pm8937_l23>;
+		vio-supply = <&vreg_cam_rear_vio>;
+		aux-supply = <&pm8937_l17>;
+
+		orientation = <1>;
+		rotation = <270>;
+
+		port {
+			rear_cam_ep: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
+
 
 &gpu {
 	status = "okay";
@@ -414,6 +487,13 @@
 
 &tlmm {
 	gpio-reserved-ranges = <0 4>;
+
+	cam_sensor_rear_default: cam-sensor-rear-default-state {
+		pins = "gpio27", "gpio35", "gpio39";
+		function = "gpio";
+		bias-disable;
+		drive-strength = <2>;
+	};
 
 	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio91";
