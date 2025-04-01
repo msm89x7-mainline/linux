@@ -1,0 +1,229 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025, Barnabas Czeman <barnabas.czeman@mainlining.org>
+ */
+#include "msm8937.dtsi"
+
+/delete-node/ &cpu_opp_table_c0;
+/delete-node/ &cpu_opp_table_c1;
+/delete-node/ &pll_opp_table_c0;
+/delete-node/ &pll_opp_table_c1;
+/delete-node/ &adreno_smmu;
+
+/ {
+	cpu_opp_table_c0: opp-table-c0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-768000000 {
+			opp-hz = /bits/ 64 <768000000>;
+		};
+
+		opp-998400000 {
+			opp-hz = /bits/ 64 <998400000>;
+		};
+
+		opp-1171200000 {
+			opp-hz = /bits/ 64 <1171200000>;
+		};
+
+		opp-1305600000 {
+			opp-hz = /bits/ 64 <1305600000>;
+		};
+
+		opp-1459200000 {
+			opp-hz = /bits/ 64 <1459200000>;
+		};
+	};
+
+	cpu_opp_table_c1: opp-table-c1 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-960000000 {
+			opp-hz = /bits/ 64 <960000000>;
+		};
+
+		opp-1305600000 {
+			opp-hz = /bits/ 64 <1305600000>;
+		};
+
+		opp-1497600000 {
+			opp-hz = /bits/ 64 <1497600000>;
+		};
+
+		opp-1708800000 {
+			opp-hz = /bits/ 64 <1708800000>;
+		};
+
+		opp-1958400000 {
+			opp-hz = /bits/ 64 <1958400000>;
+		};
+	};
+};
+
+&a53pll_c0 {
+	operating-points-v2 = <&pll_opp_table_c0>;
+
+	pll_opp_table_c0: opp-table {
+		compatible = "operating-points-v2";
+
+		opp-768000000 {
+			opp-hz = /bits/ 64 <768000000>;
+		};
+
+		opp-998400000 {
+			opp-hz = /bits/ 64 <998400000>;
+		};
+
+		opp-1171200000 {
+			opp-hz = /bits/ 64 <1171200000>;
+		};
+
+		opp-1305600000 {
+			opp-hz = /bits/ 64 <1305600000>;
+		};
+
+		opp-1459200000 {
+			opp-hz = /bits/ 64 <1459200000>;
+		};
+	};
+};
+
+&a53pll_c1 {
+	operating-points-v2 = <&pll_opp_table_c1>;
+
+	pll_opp_table_c1: opp-table {	
+		compatible = "operating-points-v2";
+
+		opp-960000000 {
+			opp-hz = /bits/ 64 <960000000>;
+		};
+
+		opp-1305600000 {
+			opp-hz = /bits/ 64 <1305600000>;
+		};
+
+		opp-1497600000 {
+			opp-hz = /bits/ 64 <1497600000>;
+		};
+
+		opp-1708800000 {
+			opp-hz = /bits/ 64 <1708800000>;
+		};
+
+		opp-1958400000 {
+			opp-hz = /bits/ 64 <1958400000>;
+		};
+	};
+};
+
+&adsp {
+	power-domains = <&rpmpd SDM439_VDDCX>;
+	power-domain-names = "cx";
+};
+
+&gpu {
+	iommus = <&adreno_smmu 0>;
+};
+
+&gcc {
+	compatible = "qcom,gcc-sdm439";
+};
+
+&soc {	
+	adreno_smmu: iommu@1c48000 {
+		compatible = "qcom,msm8953-iommu", "qcom,msm-iommu-v2";
+		ranges = <0 0x01c48000 0x8000>;
+
+		clocks = <&gcc GCC_OXILI_AHB_CLK>,
+			 <&gcc GCC_BIMC_GFX_CLK>;
+		clock-names = "iface", "bus";
+
+		power-domains = <&gcc MSM8937_OXILI_CX_GDSC>;
+
+		qcom,iommu-secure-id = <18>;
+
+		#address-cells = <1>;
+		#iommu-cells = <1>;
+		#size-cells = <1>;
+
+		/* gfx3d_user */
+		iommu-ctx@0 {
+			compatible = "qcom,msm-iommu-v2-ns";
+			reg = <0x0000 0x1000>;
+			interrupts = <GIC_SPI 225 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		/* gfx3d_secure */
+		iommu-ctx@2000 {
+			compatible = "qcom,msm-iommu-v2-sec";
+			reg = <0x2000 0x1000>;
+			interrupts = <GIC_SPI 233 IRQ_TYPE_LEVEL_HIGH>;
+		};
+	};
+};
+
+&mdss_dsi0 {
+	power-domains = <&rpmpd SDM439_VDDCX>;
+};
+
+&mdss_dsi1 {
+	power-domains = <&rpmpd SDM439_VDDCX>;
+};
+
+&mdss_dsi0_phy {
+	compatible = "qcom,dsi-phy-12nm";
+
+	reg = <0x01a94400 0x300>,
+	      <0x01a94400 0x400>,
+	      <0x0193e000 0x30>;
+
+	reg-names = "dsi_pll",
+		    "dsi_phy",
+		    "dsi_phy_regulator";
+};
+
+&mdss_dsi1_phy {
+	compatible = "qcom,dsi-phy-12nm";
+
+	reg = <0x1a96400 0x300>,
+	      <0x1a96400 0x400>,
+	      <0x0193e000 0x30>;
+
+	reg-names = "dsi_pll",
+		    "dsi_phy",
+		    "dsi_phy_regulator";
+};
+
+&modem {
+	compatible = "qcom,sdm439-mss-pil";
+	power-domains = <&rpmpd SDM439_VDDCX>,
+			<&rpmpd SDM439_VDDMX_AO>,
+			<&rpmpd SDM439_VDDMD>;
+	power-domain-names = "cx", "mx", "mss";
+
+};
+
+&rpmcc {
+	compatible = "qcom,rpmcc-sdm429", "qcom,rpmcc";
+};
+
+&rpmpd {
+	compatible = "qcom,sdm439-rpmpd";
+};
+
+&sdhc_1 {
+	power-domains = <&rpmpd SDM439_VDDCX>;
+};
+
+&sdhc_2 {
+	power-domains = <&rpmpd SDM439_VDDCX>;
+};
+
+&wcnss {
+	power-domains = <&rpmpd SDM439_VDDCX>,
+			<&rpmpd SDM439_VDDMX>;
+	power-domain-names = "cx",
+			     "mx";
+};
