@@ -435,6 +435,14 @@
 	status = "okay";
 };
 
+&venus {
+	status = "okay";
+};
+
+&venus_mem {
+	status = "okay";
+};
+
 &wcd_codec {
 	qcom,hphl-jack-type-normally-open;
 	qcom,mbhc-vthreshold-high = <87 120 215 475 500>;
