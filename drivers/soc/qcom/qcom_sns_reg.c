@@ -255,12 +255,19 @@ static const struct of_device_id sns_reg_supported_socs[] __maybe_unused = {
 
 static enum sns_reg_target_rproc get_target_rproc(void)
 {
+	int ret;
 	const struct of_device_id *match;
 	const struct sns_reg_of_match_data *mdata;
+	const char *top_compatible;
 
 	match = of_match_node(sns_reg_supported_socs, of_root);
 	if (!match)
 		return NOT_SUPPORTED;
+
+	ret = of_property_read_string(of_root, "compatible", &top_compatible);
+	if (ret == 0)
+		if (strcmp(top_compatible, "motorola,montana") == 0)
+			return NOT_SUPPORTED;
 
 	mdata = match->data;
 	return mdata->target_rproc;
