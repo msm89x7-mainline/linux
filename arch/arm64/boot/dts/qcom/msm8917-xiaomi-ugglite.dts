@@ -12,6 +12,7 @@
 #include <dt-bindings/leds/common.h>
 #include "msm8917.dtsi"
 #include "pm8937.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 /delete-node/ &qseecom_mem;
 
@@ -26,6 +27,22 @@
 	aliases {
 		mmc0 = &sdhc_1;
 		mmc1 = &sdhc_2;
+	};
+
+	speaker_amp: audio-amplifier {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&tlmm 1 GPIO_ACTIVE_HIGH>;
+		pinctrl-0 = <&speaker_amp_default>;
+		pinctrl-names = "default";
+		sound-name-prefix = "Speaker Amp";
+	};
+
+	headphones_switch: audio-switch {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&tlmm 25 GPIO_ACTIVE_HIGH>;
+		pinctrl-0 = <&headphones_switch_default>;
+		pinctrl-names = "default";
+		sound-name-prefix = "Headphones Switch";
 	};
 
 	battery: battery {
@@ -99,6 +116,19 @@
 		};
 	};
 
+	headphones-input-enable {
+		compatible = "regulator-fixed";
+		regulator-name = "headphones-input";
+		gpio = <&tlmm 16 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+	};
+
+	irled {
+		compatible = "pwm-ir-tx";
+		pwms = <&pm8937_pwm 0 0>;
+	};
+
 	reserved-memory {
 		qseecom_mem: qseecom@84a00000 {
 			reg = <0x0 0x84a00000 0x0 0x1900000>;
@@ -111,6 +141,11 @@
 		};
 	};
 
+	vibrator {
+		compatible = "gpio-vibrator";
+		enable-gpios = <&tlmm 9 GPIO_ACTIVE_HIGH>;
+	};
+
 	vph_pwr: vph-pwr-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vph_pwr";
@@ -119,7 +154,26 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+};
 
+&adsp {
+	status = "okay";
+};
+
+&adsp_mem {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
+};
+
+&bam_dmux {
+	status = "okay";
+};
+
+&bam_dmux_dma {
+	status = "okay";
 };
 
 &blsp1_i2c2 {
@@ -149,6 +203,24 @@
 &blsp1_i2c3 {
 	status = "okay";
 
+	touchscreen@38 {
+		compatible = "edt,edt-ft5406";
+		reg = <0x38>;
+
+		interrupts-extended = <&tlmm 65 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
+		vcc-supply = <&pm8937_l10>;
+		iovcc-supply = <&pm8937_l5>;
+
+		pinctrl-0 = <&tsp_int_rst_default>;
+		pinctrl-names = "default";
+
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+
+		status = "disabled";
+	};
+
 	touchscreen@5d {
 		compatible = "goodix,gt911";
 		reg = <0x5d>;
@@ -164,6 +236,8 @@
 
 		touchscreen-size-x = <720>;
 		touchscreen-size-y = <1280>;
+
+		status = "disabled";
 	};
 };
 
@@ -188,7 +262,19 @@
 	};
 };
 
+&gps_mem {
+	status = "okay";
+};
+
 &gpu {
+	status = "okay";
+};
+
+&lpass_codec{
+	status = "okay";
+};
+
+&mba_mem {
 	status = "okay";
 };
 
@@ -231,6 +317,39 @@
 &mdss_dsi0_phy {
 	vddio-supply = <&pm8937_l6>;
 	qcom,dsi-phy-regulator-ldo-mode;
+};
+
+&memshare {
+	status = "okay";
+};
+
+&modem {
+	mss-supply = <&pm8937_s1>;
+	pll-supply = <&pm8937_l7>;
+	status = "okay";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5500000>;
+	status = "okay";
+};
+
+&pm8937_gpios {
+	pwm_enable_default: pwm-enable-default-state {
+		pins = "gpio6";
+		function = "dtest2";
+		output-low;
+		bias-pull-down;
+		qcom,drive-strength = <2>;
+	};
+};
+
+&pm8937_pwm {
+	qcom,dtest = <2 2>;
+	pinctrl-0 = <&pwm_enable_default>;
+	pinctrl-names = "default";
+
+	status = "okay";
 };
 
 &pm8937_resin {
@@ -387,6 +506,34 @@
 	clock-frequency = <32768>;
 };
 
+&sound {
+	model = "xiaomi-ugg";
+
+	aux-devs = <&speaker_amp>, <&headphones_switch>;
+	widgets =
+		"Speaker", "Speaker",
+		"Headphone", "Headphones";
+	pin-switches = "Speaker", "Headphones";
+	audio-routing =
+		"Speaker", "Speaker Amp OUTL",
+		"Speaker", "Speaker Amp OUTR",
+		"Speaker Amp INL", "HPHL",
+		"Speaker Amp INR", "HPHL",
+		"Headphones", "Headphones Switch OUTL",
+		"Headphones", "Headphones Switch OUTR",
+		"Headphones Switch INL", "HPHL",
+		"Headphones Switch INR", "HPHR",
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS External2",
+		"AMIC3", "MIC BIAS External1",
+		"MM_DL1", "MultiMedia1 Playback",
+		"MM_DL3", "MultiMedia3 Playback",
+		"MM_DL4", "MultiMedia4 Playback",
+		"MultiMedia2 Capture", "MM_UL2";
+
+	status = "okay";
+};
+
 &tlmm {
 	gpio-reserved-ranges = <85 4>;
 
@@ -404,6 +551,14 @@
 		bias-pull-up;
 	};
 
+	headphones_switch_default: headphones-switch-default-state {
+		pins = "gpio25";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-up;
+		output-high;
+	};
+
 	panel_default: panel-default-state {
 		pins = "gpio60", "gpio93";
 		function = "gpio";
@@ -417,6 +572,14 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	speaker_amp_default: speaker-amp-default-state {
+		pins = "gpio1";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-up;
+		output-high;
 	};
 
 	tsp_int_rst_default: tsp-int-rst-default-state {
@@ -448,6 +611,20 @@
 };
 
 &venus_mem {
+	status = "okay";
+};
+
+&wcd_codec {
+	qcom,hphl-jack-type-normally-open;
+	qcom,gnd-jack-type-normally-open;
+	qcom,mbhc-vthreshold-high = <100 200 450 500 500>;
+	qcom,mbhc-vthreshold-low = <100 200 450 500 500>;
+	qcom,micbias1-ext-cap;
+	qcom,micbias2-ext-cap;
+
+	vdd-cdc-io-supply = <&pm8937_l5>;
+	vdd-cdc-tx-rx-cx-supply = <&pm8937_s4>;
+	vdd-micbias-supply = <&pm8937_l13>;
 	status = "okay";
 };
 
