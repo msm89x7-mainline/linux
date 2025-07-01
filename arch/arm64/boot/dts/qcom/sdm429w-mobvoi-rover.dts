@@ -1,0 +1,427 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025 Vasiliy Doylov <nekocwd@mainlining.org>
+ */
+/dts-v1/;
+#include <dt-bindings/arm/qcom,ids.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/qcom,spmi-haptics.h>
+#include "sdm429.dtsi"
+#include "pm660.dtsi"
+
+/ {
+	interrupt-parent = <&intc>;
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	model = "Mobvoi TicWatch Pro 3 LTE";
+	compatible = "mobvoi,rover", "qcom,sdm429w";
+
+	battery: battery {
+		compatible = "simple-battery";
+		device-chemistry = "lithium-ion-polymer";
+
+		constant-charge-current-max-microamp = <300000>;
+
+		charge-full-design-microamp-hours = <595000>;
+		voltage-min-design-microvolt = <3600000>;
+		voltage-max-design-microvolt = <4450000>;
+	};
+
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		stdout-path = "framebuffer0";
+
+		framebuffer0: framebuffer@90001000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0x90001000 0x0 (454 * 454 * 3)>;
+			width = <454>;
+			height = <454>;
+			stride = <(454 * 3)>;
+			format = "r8g8b8";
+
+			clocks = <&gcc GCC_MDSS_AHB_CLK>,
+				 <&gcc GCC_MDSS_AXI_CLK>,
+				 <&gcc GCC_MDSS_VSYNC_CLK>,
+				 <&gcc GCC_MDSS_MDP_CLK>,
+				 <&gcc GCC_MDSS_BYTE0_CLK>,
+				 <&gcc GCC_MDSS_PCLK0_CLK>,
+				 <&gcc GCC_MDSS_ESC0_CLK>;
+			power-domains = <&gcc MDSS_GDSC>;
+		};
+	};
+
+	usb_vbus: extcon-usb-dummy {
+		compatible = "linux,extcon-usb-dummy";
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		pinctrl-0 = <&gpio_keys_default>;
+		pinctrl-names = "default";
+
+		key-volup {
+			label = "Volume Up";
+			linux,code = <KEY_VOLUMEDOWN>;
+			gpios = <&tlmm 48 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			debounce-interval = <15>;
+		};
+	};
+
+	reserved-memory {
+		framebuffer_mem: memory@90001000 {
+			reg = <0x0 0x90001000 0x0 (454 * 454 * 3)>;
+			no-map;
+		};
+	};
+
+	sdio_pwrseq: sdio-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		pinctrl-names = "default";
+		pinctrl-0 = <&wifi_reg_on>;
+		reset-gpios = <&tlmm 72 GPIO_ACTIVE_LOW>;
+	};
+
+	vibrator {
+		compatible = "gpio-vibrator";
+		enable-gpios = <&tlmm 39 GPIO_ACTIVE_HIGH>;
+		vcc-supply = <&vibrator_regulator>;
+	};
+
+	vibrator_regulator: vibrator-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vib_vreg";
+		enable-active-high;
+		gpio = <&tlmm 58 GPIO_ACTIVE_HIGH>;
+	};
+
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-min-microvolt = <3700000>;
+		regulator-max-microvolt = <3700000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+};
+
+&blsp1_i2c4 {
+	status = "okay";
+
+	touchscreen@20 {
+		compatible = "zinitix,bt541";
+
+		reg = <0x20>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <44 IRQ_TYPE_EDGE_FALLING>;
+
+		touchscreen-size-x = <454>;
+		touchscreen-size-y = <454>;
+	};
+};
+
+&blsp1_spi3 {
+	status = "okay";
+
+	// bcm4775 GNSS
+};
+
+&blsp2_i2c6 {
+	status = "okay";
+
+	// It seems to work, but this chip has no support on libnfc side
+	nfc@8 {
+		compatible = "st,st21nfcb-i2c";
+		reg = <0x08>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <21 IRQ_TYPE_LEVEL_HIGH>;
+		reset-gpios = <&tlmm 20 GPIO_ACTIVE_HIGH>;
+
+		ese-present;
+		uicc-present;
+	};
+};
+
+&blsp2_uart1 {
+	status = "okay";
+
+	bluetooth {
+		compatible = "brcm,bcm43430a1-bt";
+		interrupt-parent = <&tlmm>;
+		interrupts = <74 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "host-wakeup";
+		device-wakeup-gpios = <&tlmm 129 GPIO_ACTIVE_HIGH>;
+		shutdown-gpios = <&tlmm 73 GPIO_ACTIVE_HIGH>;
+		max-speed = <3000000>;
+	};
+};
+
+&cpu_opp_table_c1 {
+	/*
+	 * Device works unstable on this frequency.
+	 * Removed for stability reasons
+	 */
+	/delete-node/ opp-2016000000;
+};
+
+&pm660_adc {
+	status = "okay";
+};
+
+&pm660_charger {
+	monitored-battery = <&battery>;
+	status = "okay";
+};
+
+&pm660_rradc {
+	status = "okay";
+};
+
+&pm660_temp {
+	status = "disabled";
+};
+
+&pon {
+	status = "okay";
+};
+
+&pon_pwrkey {
+	status = "okay";
+};
+
+&rpm_requests {
+	regulators-0 {
+		compatible = "qcom,rpm-pm660-regulators";
+
+		vdd_s1-supply = <&vph_pwr>;
+		vdd_s2-supply = <&vph_pwr>;
+		vdd_s3-supply = <&vph_pwr>;
+		vdd_s4-supply = <&vph_pwr>;
+		vdd_s5-supply = <&vph_pwr>;
+		vdd_s6-supply = <&vph_pwr>;
+
+		/*
+		 * S1A (FTAPC0), S2A (FTAPC1), S3A (HFAPC1) are managed
+		 * by the Core Power Reduction hardened (CPRh) and the
+		 * Operating State Manager (OSM) HW automatically.
+		 */
+
+		pm660_s4: s4 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <200>;
+			regulator-ramp-delay = <0>;
+			regulator-always-on;
+		};
+
+		pm660_s5: s5 {
+			regulator-min-microvolt = <1040000>;
+			regulator-max-microvolt = <1420000>;
+			regulator-enable-ramp-delay = <200>;
+			regulator-ramp-delay = <0>;
+		};
+
+		/* LDOs */
+		pm660_l1: l1 {
+			regulator-min-microvolt = <970000>;
+			regulator-max-microvolt = <1280000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-allow-set-load;
+		};
+
+		pm660_l3: l3 {
+			regulator-min-microvolt = <900000>;
+			regulator-max-microvolt = <1280000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l5: l5 {
+			regulator-min-microvolt = <1150000>;
+			regulator-max-microvolt = <1450000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l6: l6 {
+			regulator-min-microvolt = <670000>;
+			regulator-max-microvolt = <930000>;
+			regulator-allow-set-load;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l7: l7 {
+			regulator-min-microvolt = <1140000>;
+			regulator-max-microvolt = <1280000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l8: l8 {
+			regulator-min-microvolt = <1500000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-system-load = <325000>;
+			regulator-allow-set-load;
+		};
+
+		pm660_l9: l9 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-allow-set-load;
+		};
+
+		pm660_l10: l10 {
+			regulator-min-microvolt = <500000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-allow-set-load;
+		};
+
+		pm660_l11: l11 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l12: l12 {
+			regulator-min-microvolt = <1620000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-always-on;
+		};
+
+		/* This gives power to the MMC: never turn it off! */
+		pm660_l13: l13 {
+			regulator-min-microvolt = <1600000>;
+			regulator-max-microvolt = <2040000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-allow-set-load;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		pm660_l15: l15 {
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3400000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l16: l16 {
+			regulator-min-microvolt = <2970000>;
+			regulator-max-microvolt = <3400000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+		};
+
+		pm660_l19: l19 {
+			regulator-min-microvolt = <2700000>;
+			regulator-max-microvolt = <3400000>;
+			regulator-enable-ramp-delay = <250>;
+			regulator-ramp-delay = <0>;
+			regulator-allow-set-load;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+	};
+};
+
+&sdhc_1 {
+	vmmc-supply = <&pm660_l19>;
+	vqmmc-supply = <&pm660_l13>;
+	status = "okay";
+};
+
+&sdhc_2 {
+	cap-sd-highspeed;
+	cap-sdio-irq;
+	keep-power-in-suspend;
+	max-frequency = <50000000>;
+	mmc-pwrseq = <&sdio_pwrseq>;
+	no-mmc;
+	no-sd;
+	non-removable;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	status = "okay";
+
+	wifi@1 {
+		compatible = "brcm,bcm43430a1-fmac", "brcm,bcm4329-fmac";
+		reg = <1>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <128 0x2008>;
+		interrupt-names = "host-wake";
+		reset-gpios = <&tlmm 72 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&sleep_clk {
+	clock-frequency = <32768>;
+};
+
+&spmi_bus {
+	pmic@0 {
+		pm660_fg: fuel-gauge@4000 {
+			compatible = "qcom,pmi8998-fg";
+			reg = <0x4000>;
+
+			interrupts = <0x0 0x40 0x2 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "soc-delta";
+
+			power-supplies = <&pm660_charger>;
+			monitored-battery = <&battery>;
+		};
+	};
+};
+
+&tlmm {
+	status = "okay";
+
+	gpio_keys_default: gpio-keys-default-state {
+		pins = "gpio48";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
+
+	wifi_reg_on: wifi-reg-on-state {
+		pins = "gpio72";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+};
+
+&usb {
+	dr_mode = "peripheral";
+	extcon = <&usb_vbus>;
+	status = "okay";
+};
+
+&usb_hs_phy {
+	vdd-supply = <&pm660_l6>;
+	vdda1p8-supply = <&pm660_l12>;
+	vdda3p3-supply = <&pm660_l16>;
+	status = "okay";
+};
+
+&xo_board {
+	clock-frequency = <19200000>;
+};
