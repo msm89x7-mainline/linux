@@ -200,6 +200,11 @@ static int qcom_smgr_request_single_sensor_info(struct qcom_smgr *smgr,
 
 		sensor->data_types[i].max_sample_rate =
 			resp.data_types[i].max_sample_rate_hz;
+
+		sensor->data_types[i].sample_rate_range[0] = 1;
+		sensor->data_types[i].sample_rate_range[1] = 1;
+		sensor->data_types[i].sample_rate_range[2] =
+			sensor->data_types[i].max_sample_rate;
 	}
 
 	return 0;
@@ -454,15 +459,13 @@ static int qcom_smgr_iio_read_avail(struct iio_dev *iio_dev,
 				    long mask)
 {
 	struct qcom_smgr_iio_priv *priv = iio_priv(iio_dev);
-	const int samp_freq_vals[3] = {
-		1, 1, priv->sensor->data_types[0].cur_sample_rate
-	};
+	const struct qcom_smgr_data_type_item *data = &priv->sensor->data_types[0];
 
 	switch (mask) {
 	case IIO_CHAN_INFO_SAMP_FREQ:
 		*type = IIO_VAL_INT;
-		*vals = samp_freq_vals;
-		*length = ARRAY_SIZE(samp_freq_vals);
+		*vals = data->sample_rate_range;
+		*length = ARRAY_SIZE(data->sample_rate_range);
 		return IIO_AVAIL_RANGE;
 	}
 

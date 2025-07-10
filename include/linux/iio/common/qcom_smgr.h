@@ -37,6 +37,7 @@ struct qcom_smgr_data_type_item {
 
 	u16 max_sample_rate;
 	u16 cur_sample_rate;
+	int sample_rate_range[3];
 };
 
 struct qcom_smgr_sensor {
