@@ -1,0 +1,111 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025, Simon Sommer <misom@symlinks.dev>
+ */
+#include "sdm439.dtsi"
+
+/delete-node/ &pll_opp_table_c1;
+/delete-node/ &cpu_opp_table_c1;
+
+/ {
+	cpu_opp_table_c1: opp-table-c1 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-960000000 {
+			opp-hz = /bits/ 64 <960000000>;
+		};
+
+		opp-1305600000 {
+			opp-hz = /bits/ 64 <1305600000>;
+		};
+
+		opp-1497600000 {
+			opp-hz = /bits/ 64 <1497600000>;
+		};
+
+		opp-1708800000 {
+			opp-hz = /bits/ 64 <1708800000>;
+		};
+
+		opp-1804800000 {
+			opp-hz = /bits/ 64 <1804800000>;
+		};
+
+		opp-1958400000 {
+			opp-hz = /bits/ 64 <1958400000>;
+		};
+
+		opp-2016000000 {
+			opp-hz = /bits/ 64 <2016000000>;
+		};
+	};
+};
+
+&a53pll_c1 {
+	operating-points-v2 = <&pll_opp_table_c1>;
+	pll_opp_table_c1: opp-table {
+		compatible = "operating-points-v2";
+
+		opp-960000000 {
+			opp-hz = /bits/ 64 <960000000>;
+		};
+
+		opp-1305600000 {
+			opp-hz = /bits/ 64 <1305600000>;
+		};
+
+		opp-1497600000 {
+			opp-hz = /bits/ 64 <1497600000>;
+		};
+
+		opp-1708800000 {
+			opp-hz = /bits/ 64 <1708800000>;
+		};
+
+		opp-1804800000 {
+			opp-hz = /bits/ 64 <1804800000>;
+		};
+
+		opp-1958400000 {
+			opp-hz = /bits/ 64 <1958400000>;
+		};
+
+		opp-2016000000 {
+			opp-hz = /bits/ 64 <2016000000>;
+		};
+	};
+};
+
+&adreno_smmu {
+	/delete-node/ iommu-ctx@2000; // gfx3d_secure
+};
+
+&apcs0 {
+	status = "disabled";
+};
+
+&soc {
+	blsp2_uart2: serial@7af0000 {
+		compatible = "qcom,msm-uartdm-v1.4", "qcom,msm-uartdm";
+		reg = <0x07af0000 0x200>;
+
+		interrupts = <GIC_SPI 307 IRQ_TYPE_LEVEL_HIGH>;
+
+		clocks = <&gcc GCC_BLSP2_UART2_APPS_CLK>, <&gcc GCC_BLSP2_AHB_CLK>;
+		clock-names = "core", "iface";
+
+		dmas = <&blsp2_dma 2>, <&blsp2_dma 3>;
+		dma-names = "tx", "rx";
+
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&blsp2_uart2_default>;
+		pinctrl-1 = <&blsp2_uart2_sleep>;
+
+		status = "disabled";
+	};
+};
+
+&thermal_zones {
+	/delete-node/ cpuss0-thermal;
+};
