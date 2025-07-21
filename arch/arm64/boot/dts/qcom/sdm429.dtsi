@@ -86,6 +86,42 @@
 };
 
 &soc {
+	blsp2_i2c6: i2c@7af6000 {
+		compatible = "qcom,i2c-qup-v2.2.1";
+		reg = <0x07af6000 0x600>;
+		interrupts = <GIC_SPI 300 IRQ_TYPE_LEVEL_HIGH>;
+		clock-names = "core", "iface";
+		clocks = <&gcc GCC_BLSP2_QUP2_I2C_APPS_CLK>,
+			 <&gcc GCC_BLSP2_AHB_CLK>;
+		dmas = <&blsp2_dma 6>, <&blsp2_dma 7>;
+		dma-names = "tx", "rx";
+
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&blsp2_i2c6_default>;
+		pinctrl-1 = <&blsp2_i2c6_sleep>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		status = "disabled";
+	};
+
+	blsp2_uart1: serial@0x7aef000 {
+		compatible = "qcom,msm-uartdm-v1.4", "qcom,msm-uartdm";
+		reg = <0x7aef000 0x200>;
+		interrupts = <GIC_SPI 306 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&gcc GCC_BLSP2_UART1_APPS_CLK>, <&gcc GCC_BLSP2_AHB_CLK>;
+		clock-names = "core", "iface";
+		dmas = <&blsp2_dma 0>, <&blsp2_dma 1>;
+		dma-names = "tx", "rx";
+
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&blsp2_uart1_default>;
+		pinctrl-1 = <&blsp2_uart1_sleep>;
+
+		status = "disabled";
+	};
+
 	blsp2_uart2: serial@7af0000 {
 		compatible = "qcom,msm-uartdm-v1.4", "qcom,msm-uartdm";
 		reg = <0x07af0000 0x200>;
@@ -111,6 +147,34 @@
 };
 
 &tlmm {
+	blsp2_i2c6_default: blsp2-i2c6-default-state {
+		pins = "gpio22", "gpio23";
+		function = "blsp_i2c6";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	blsp2_i2c6_sleep: blsp2-i2c6-sleep-state {
+		pins = "gpio22", "gpio23";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	blsp2_uart1_default: blsp2-uart1-default-state {
+		pins = "gpio16", "gpio17", "gpio18", "gpio19";
+		function = "blsp_uart5";
+		drive-strength = <4>;
+		bias-disable;
+	};
+
+	blsp2_uart1_sleep: blsp2-uart1-sleep-state {
+		pins = "gpio16", "gpio17", "gpio18", "gpio19";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
 	blsp2_uart2_default: blsp2-uart2-default-state {
 		pins = "gpio20", "gpio21", "gpio22", "gpio23";
 		function = "blsp_uart6";
