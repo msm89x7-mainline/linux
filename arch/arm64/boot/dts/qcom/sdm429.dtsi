@@ -109,3 +109,19 @@
 &thermal_zones {
 	/delete-node/ cpuss0-thermal;
 };
+
+&tlmm {
+	blsp2_uart2_default: blsp2-uart2-default-state {
+		pins = "gpio20", "gpio21", "gpio22", "gpio23";
+		function = "blsp_uart6";
+		drive-strength = <4>;
+		bias-disable;
+	};
+
+	blsp2_uart2_sleep: blsp2-uart2-sleep-state {
+		pins = "gpio20", "gpio21", "gpio22", "gpio23";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+};
