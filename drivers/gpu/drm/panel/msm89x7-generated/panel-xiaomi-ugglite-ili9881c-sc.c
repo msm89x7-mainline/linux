@@ -154,6 +154,20 @@ static const struct drm_panel_funcs sc_ili9881c_panel_funcs = {
 	.get_modes = sc_ili9881c_get_modes,
 };
 
+static int sc_ili9881c_set_display_brightness(struct mipi_dsi_device *dsi,
+					u16 brightness)
+{
+	u8 payload[2] = { (brightness & 0xf0) >> 4, (brightness & 0x0f) << 4 };
+	ssize_t err;
+
+	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+				 payload, sizeof(payload));
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+
 static int sc_ili9881c_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
@@ -165,7 +179,7 @@ static int sc_ili9881c_bl_update_status(struct backlight_device *bl)
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
-	ret = mipi_dsi_dcs_set_display_brightness(dsi, brightness);
+	ret = sc_ili9881c_set_display_brightness(dsi, brightness);
 	if (ret < 0)
 		return ret;
 
