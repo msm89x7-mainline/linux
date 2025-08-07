@@ -49,6 +49,11 @@
 		default-brightness-level = <128>;
 	};
 
+	battery: battery {
+               compatible = "simple-battery";
+               charge-full-design-microamp-hours = <3120000>;
+        };
+
 	chosen {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -140,6 +145,43 @@
 &bam_dmux_dma {
 	status = "okay";
 };
+
+&blsp2_i2c1 {
+        status = "okay";
+
+        smb358_charger: smb358-charger@57 {
+                compatible = "summit,smb358";
+                reg = <0x57>;
+ 
+                interrupts-extended = <&tlmm 61 IRQ_TYPE_NONE>;
+ 
+                summit,mains-current-limit-microamp = <1500000>;
+                summit,usb-current-limit-microamp = <500000>;
+ 
+                summit,enable-mains-charging;
+                summit,enable-usb-charging;
+                summit,enable-otg-charging;
+ 
+                monitored-battery = <&battery>;
+ 
+                usb-vbus {
+                        regulator-name = "usb_vbus";
+                        regulator-min-microvolt = <5000000>;
+                        regulator-max-microvolt = <5000000>;
+                        regulator-min-microamp = <750000>;
+                        regulator-max-microamp = <750000>;
+                };
+        };
+
+        cw2015-fg@62 {
+                compatible = "cellwise,cw2015";
+                reg = <0x62>;
+                monitored-battery = <&battery>;
+                power-supplies = <&smb358_charger>;
+        };
+};
+
+
 
 &blsp1_i2c2 {
 	status = "okay";
