@@ -11,7 +11,7 @@
 #include "pm8937.dtsi"
 // #include "msm8937-qdsp6.dtsi"
 
-/delete-node/ &qseecom_mem;
+// /delete-node/ &qseecom_mem;
 
 / {
     model = "Lenovo Tab 4 10 (tbx304x)";
@@ -45,6 +45,7 @@
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
             // status = "disabled"; // is this because of venus ???
+			status = "okay";
 		};
     };
 
@@ -54,11 +55,12 @@
 			no-map;
 		};
 
-        ramoops_mem: ramoops@0x8ee00000 {
-			compatible = "ramoops";
-			reg = <0x0 0x8ee00000 0x0 0x80000>;
-			console-size = <0x40000>;
-		};
+		// maybe handled by lk2nd?
+        // ramoops_mem: ramoops@0x8ee00000 {
+		// 	compatible = "ramoops";
+		// 	reg = <0x0 0x8ee00000 0x0 0x80000>;
+		// 	console-size = <0x40000>;
+		// };
 	};
 
 };
