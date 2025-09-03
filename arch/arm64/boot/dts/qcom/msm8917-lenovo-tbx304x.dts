@@ -15,7 +15,7 @@
 
 / {
     model = "Lenovo Tab 4 10 (tbx304x)";
-    compatible = "lenovo,tbx304x", "lenovo,tb-x304l", "qcom,msm8917"; // todo: remove legacy lk2nd string
+    compatible = "lenovo,tbx304x", "qcom,msm8917"; 
     chassis-type = "tablet";
 
     qcom,msm-id = <QCOM_ID_MSM8917 0>;
