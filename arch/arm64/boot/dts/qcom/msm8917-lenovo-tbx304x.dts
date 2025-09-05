@@ -9,7 +9,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include "msm8917.dtsi"
 #include "pm8937.dtsi"
-// #include "msm8937-qdsp6.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 // /delete-node/ &qseecom_mem;
 
@@ -26,7 +26,8 @@
 		#size-cells = <2>;
 		ranges;
 
-        stdout-path = "framebuffer0";
+        bootargs = "clk_ignore_unused pd_ignore_unused";
+		stdout-path = "framebuffer0";
 
         framebuffer0: framebuffer@90001000 {
 			compatible = "simple-framebuffer";
@@ -63,4 +64,212 @@
 		// };
 	};
 
+	// !! TODO !!
+	// check what this is and what it does and if it won't do anything bad
+	// actually every device has this so it's probably fine :v
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-min-microvolt = <3700000>;
+		regulator-max-microvolt = <3700000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	usb_vbus: extcon-usb-dummy {
+		compatible = "linux,extcon-usb-dummy";
+	};
+};
+
+&rpm_requests {
+	regulators-0 {
+		compatible = "qcom,rpm-pm8937-regulators";
+
+		vdd_s1-supply = <&vph_pwr>;
+		vdd_s2-supply = <&vph_pwr>;
+		vdd_s3-supply = <&vph_pwr>;
+		vdd_s4-supply = <&vph_pwr>;
+
+		vdd_l1_l19-supply = <&pm8937_s3>;
+		vdd_l2_l23-supply = <&pm8937_s3>;
+		vdd_l3-supply = <&pm8937_s3>;
+		vdd_l4_l5_l6_l7_l16-supply = <&pm8937_s4>;
+		vdd_l8_l11_l12_l17_l22-supply = <&vph_pwr>;
+		vdd_l9_l10_l13_l14_l15_l18-supply = <&vph_pwr>;
+
+		// correct
+		// MSM Modem
+		pm8937_s1: s1 {
+			regulator-min-microvolt = <1000000>;
+			regulator-max-microvolt = <1225000>;
+		};
+
+		/*
+		// DO NOT ENABLE, differs in downstream
+		// Core CPU, graphics
+		pm8937_s2: s2 {
+			regulator-min-microvolt = <550000>;
+			regulator-max-microvolt = <1350000>;
+		}
+		*/
+
+		// correct
+		// 1,2,3,18,23 LDOs
+		pm8937_s3: s3 {
+			regulator-min-microvolt = <1300000>;
+			regulator-max-microvolt = <1300000>;
+		};
+
+		// correct
+		// 4,5,6,7,16 LDOs; RF,XO clocks
+		pm8937_s4: s4 {
+			regulator-min-microvolt = <2050000>;
+			regulator-max-microvolt = <2050000>;
+		};
+
+		// l1 not present in downstream
+
+		// correct
+		pm8937_l2: l2 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+		};
+
+		// l3 present, hopefully unimportant; managed as a power domain => no way to set a dangerous voltage
+		// l4 missing
+
+		// correct
+		// some io, eMMC, among other things
+		pm8937_l5: l5 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		// correct
+		// display, touchscreen, cam
+		pm8937_l6: l6 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		// correct
+		pm8937_l7: l7 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		// correct
+		// eMMC
+		pm8937_l8: l8 {
+			regulator-min-microvolt = <2850000>;
+			regulator-max-microvolt = <2900000>;
+		};
+
+		// correct
+		pm8937_l9: l9 {
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3300000>;
+		};
+
+		// i think max-mV should be set to 2_900_000, but it'll work fine i hope
+		// in DS it's set to 3_000_000 lol
+		pm8937_l10: l10 {
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <2800000>;
+		};
+
+		// mV is correct
+		// idk how to check the load vals, let's just trust them
+		// allegedly the load vals increase SD card stability
+		// SD card
+		pm8937_l11: l11 {
+			regulator-min-microvolt = <2950000>;
+			regulator-max-microvolt = <2950000>;
+			regulator-allow-set-load;
+			regulator-system-load = <200000>;
+		};
+
+		// weird but correct
+		pm8937_l12: l12 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <2950000>;
+		};
+
+		// correct
+		// usb, maybe sound as well
+		pm8937_l13: l13 {
+			regulator-min-microvolt = <3075000>;
+			regulator-max-microvolt = <3075000>;
+		};
+
+		// correct
+		pm8937_l14: l14 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <3300000>;
+		};
+
+		// correct
+		pm8937_l15: l15 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <3300000>;
+		};
+
+		// correct		
+		pm8937_l16: l16 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		// downstream has this min 2_800_000 -> max 2_900_000
+		// correct
+		// display, touchscreen, cam
+		pm8937_l17: l17 {
+			regulator-min-microvolt = <2850000>;
+			regulator-max-microvolt = <2850000>;
+		};
+
+		/*
+		// MISSING IN DOWNSTREAM
+		// uh-oh
+		// disabling it
+		pm8937_l18: l18 {
+			regulator-min-microvolt = <2700000>;
+			regulator-max-microvolt = <2700000>;
+		};
+		*/
+
+		// correct, probably
+		pm8937_l19: l19 {
+			regulator-min-microvolt = <1225000>;
+			regulator-max-microvolt = <1350000>;
+		};
+
+		// incorrect, downstream has this at 2_800_000
+		// changing it from 2_900_000
+		// cam
+		pm8937_l22: l22 {
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <2800000>;
+		};
+
+		// correct
+		// cam
+		pm8937_l23: l23 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+		};
+	};
+};
+
+&usb {
+	dr_mode = "peripheral";
+	extcon = <&usb_vbus>;
+	status = "okay";
+};
+
+&usb_hs_phy {
+	vdd-supply = <&pm8937_l2>;
+	vdda1p8-supply = <&pm8937_l7>;
+	vdda3p3-supply = <&pm8937_l13>;
+	status = "okay";
 };
