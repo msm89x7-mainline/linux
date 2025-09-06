@@ -1,7 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-// todo: check if i am even allowed to pick a license for this, since the includes are GPL2
-// and many nodes are inspired by gpl2 code (although it's pretty much the only "canonical"
-// way to do it so i think i'm fine on that front)
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2025, ahi6
  */
@@ -26,6 +23,7 @@
 
 	aliases {
 		mmc0 = &sdhc_1;
+		mmc1 = &sdhc_2;
 	};
 
 	chosen {
@@ -33,7 +31,7 @@
 		#size-cells = <2>;
 		ranges;
 
-		bootargs = "clk_ignore_unused pd_ignore_unused pmos.debug-shell";
+		bootargs = "clk_ignore_unused pd_ignore_unused";
 		stdout-path = "framebuffer0";
 
 		framebuffer0: framebuffer@90001000 {
@@ -280,6 +278,20 @@
 	status = "okay";
 };
 
+&sdhc_2 {
+	pinctrl-0 = <&sdc2_default &sdc2_cd_default>;
+	pinctrl-1 = <&sdc2_sleep &sdc2_cd_default>;
+	pinctrl-names = "default", "sleep";
+
+	cd-gpios = <&tlmm 67 GPIO_ACTIVE_HIGH>;
+	
+	// same goes for these ones; are they needed?
+	vmmc-supply = <&pm8937_l11>;
+	vqmmc-supply = <&pm8937_l12>;
+
+	status = "okay";
+};
+
 &sleep_clk {
 	clock-frequency = <32768>;
 };
@@ -299,4 +311,14 @@
 
 &xo_board {
 	clock-frequency = <19200000>;
+};
+
+// pinctl should be at the bottom, allegedly
+&tlmm {
+	sdc2_cd_default: sdc2-cd-default-state {
+		pins = "gpio67";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 };
