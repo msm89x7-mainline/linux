@@ -21,6 +21,10 @@
     qcom,msm-id = <QCOM_ID_MSM8917 0>;
 	qcom,board-id = <QCOM_BOARD_ID(QRD, 1, 0) 0>;
 
+	aliases {
+		mmc0 = &sdhc_1;
+	};
+
     chosen {
         #address-cells = <2>;
 		#size-cells = <2>;
@@ -56,12 +60,14 @@
 			no-map;
 		};
 
+		/*
 		// maybe handled by lk2nd?
-        // ramoops_mem: ramoops@0x8ee00000 {
-		// 	compatible = "ramoops";
-		// 	reg = <0x0 0x8ee00000 0x0 0x80000>;
-		// 	console-size = <0x40000>;
-		// };
+        ramoops_mem: ramoops@0x8ee00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x8ee00000 0x0 0x80000>;
+			console-size = <0x40000>;
+		};
+		*/
 	};
 
 	// !! TODO !!
@@ -261,6 +267,16 @@
 	};
 };
 
+&sdhc_1 {
+	// are these needed? doesn't look like it
+	// i mean, they seem correct to me though, so i guess i'm keeping them
+	vmmc-supply = <&pm8937_l8>;
+	vqmmc-supply = <&pm8937_l5>;
+	
+
+	status = "okay";
+};
+
 &sleep_clk {
 	clock-frequency = <32768>;
 };
@@ -277,7 +293,6 @@
 	vdda3p3-supply = <&pm8937_l13>;
 	status = "okay";
 };
-
 
 &xo_board {
 	clock-frequency = <19200000>;
