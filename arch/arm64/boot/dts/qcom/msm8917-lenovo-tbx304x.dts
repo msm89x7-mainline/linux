@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+// todo: check if i am even allowed to pick a license for this, since the includes are GPL2
+// and many nodes are inspired by gpl2 code (although it's pretty much the only "canonical"
+// way to do it so i think i'm fine on that front)
 /*
  * Copyright (c) 2025, ahi6
  */
