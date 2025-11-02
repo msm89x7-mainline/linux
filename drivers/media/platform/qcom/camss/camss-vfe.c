@@ -969,13 +969,14 @@ static int vfe_set_clock_rates(struct vfe_device *vfe)
 
 				if (j == VFE_LINE_PIX) {
 					tmp = pixel_clock[j];
+					tmp /= 2;
 				} else {
 					struct vfe_line *l = &vfe->line[j];
 
 					bpp = camss_format_get_bpp(l->formats,
 								   l->nformats,
 								   l->fmt[MSM_VFE_PAD_SINK].code);
-					tmp = pixel_clock[j] * bpp / 64;
+					tmp = pixel_clock[j] * bpp * 3 / 128;
 				}
 
 				if (min_rate < tmp)
@@ -1050,13 +1051,14 @@ static int vfe_check_clock_rates(struct vfe_device *vfe)
 
 				if (j == VFE_LINE_PIX) {
 					tmp = pixel_clock[j];
+					tmp /= 2;
 				} else {
 					struct vfe_line *l = &vfe->line[j];
 
 					bpp = camss_format_get_bpp(l->formats,
 								   l->nformats,
 								   l->fmt[MSM_VFE_PAD_SINK].code);
-					tmp = pixel_clock[j] * bpp / 64;
+					tmp = pixel_clock[j] * bpp * 3 / 128;
 				}
 
 				if (min_rate < tmp)
