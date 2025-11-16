@@ -96,6 +96,8 @@
 			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
+			power-domains = <&cpu_pd0>;
+			power-domain-names = "psci";
 
 			l2_1: l2-cache {
 				compatible = "cache";
@@ -114,6 +116,8 @@
 			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
+			power-domains = <&cpu_pd1>;
+			power-domain-names = "psci";
 		};
 
 		cpu6: cpu@102 {
@@ -125,6 +129,8 @@
 			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
+			power-domains = <&cpu_pd2>;
+			power-domain-names = "psci";
 		};
 
 		cpu7: cpu@103 {
@@ -136,6 +142,8 @@
 			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
+			power-domains = <&cpu_pd3>;
+			power-domain-names = "psci";
 		};
 
 		cpu-map {
@@ -175,6 +183,30 @@
 				core3 {
 					cpu = <&cpu7>;
 				};
+			};
+		};
+
+		domain-idle-states {
+			cluster_sleep_0: cluster-power-collapse {
+				compatible = "domain-idle-state";
+				arm,psci-suspend-param = <0x41000053>;
+				entry-latency-us = <700>;
+				exit-latency-us = <1000>;
+				min-residency-us = <6500>;
+			};
+		};
+
+		idle-states {
+			entry-method = "psci";
+
+			cpu_sleep_0: cpu-sleep-0 {
+				compatible = "arm,idle-state";
+				idle-state-name = "standalone-power-collapse";
+				arm,psci-suspend-param = <0x40000003>;
+				entry-latency-us = <125>;
+				exit-latency-us = <180>;
+				min-residency-us = <595>;
+				local-timer-stop;
 			};
 		};
 	};
