@@ -77,6 +77,7 @@
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
+			status = "disabled";
 		};
 	};
 
@@ -280,7 +281,51 @@
 	};
 };
 
+&gpu {
+	status = "okay";
+};
+
 &lpass_codec{
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	vdda-supply = <&pm8937_l2>;
+	vddio-supply = <&pm8937_l6>;
+
+	status = "okay";
+
+	panel@0 {
+		compatible = "xiaomi,land-panel";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 60 GPIO_ACTIVE_LOW>;
+		backlight = <&pmi8950_wled>;
+
+		pinctrl-0 = <&panel_default>;
+		pinctrl-names = "default";
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vddio-supply = <&pm8937_l6>;
+	qcom,dsi-phy-regulator-ldo-mode;
+
 	status = "okay";
 };
 
@@ -539,6 +584,14 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	panel_default: panel-default-state {
+		pins = "gpio60";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
 	};
 
 	sdc2_cd_default: sdc2-cd-default-state {
