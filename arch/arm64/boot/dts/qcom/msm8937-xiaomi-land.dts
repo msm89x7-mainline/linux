@@ -11,6 +11,7 @@
 #include "msm8937.dtsi"
 #include "pm8937.dtsi"
 #include "pmi8950.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 /delete-node/ &qseecom_mem;
 
@@ -25,6 +26,23 @@
 	aliases {
 		mmc0 = &sdhc_1;
 		mmc1 = &sdhc_2;
+	};
+
+	speaker_amp: audio-amplifier {
+		compatible = "awinic,aw8738";
+		mode-gpios = <&tlmm 124 GPIO_ACTIVE_HIGH>;
+		awinic,mode = <5>;
+		sound-name-prefix = "Speaker Amp";
+		pinctrl-0 = <&speaker_amp_default>;
+		pinctrl-names = "default";
+	};
+
+	headphones_switch: audio-switch {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&tlmm 129 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "Headphones Switch";
+		pinctrl-0 = <&headphones_switch_default>;
+		pinctrl-names = "default";
 	};
 
 	battery: battery {
@@ -101,6 +119,18 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+};
+
+&adsp {
+	status = "okay";
+};
+
+&adsp_mem {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
 };
 
 &blsp1_i2c2 {
@@ -248,6 +278,10 @@
 			};
 		};
 	};
+};
+
+&lpass_codec{
+	status = "okay";
 };
 
 &pm8937_resin {
@@ -450,6 +484,32 @@
 	clock-frequency = <32768>;
 };
 
+&sound {
+	model = "xiaomi-land";
+
+	aux-devs = <&speaker_amp>, <&headphones_switch>;
+	widgets =
+		"Speaker", "Speaker",
+		"Headphone", "Headphones";
+	pin-switches = "Speaker", "Headphones";
+	audio-routing =
+		"Speaker", "Speaker Amp OUT",
+		"Speaker Amp IN", "HPHR",
+		"Headphones", "Headphones Switch OUTL",
+		"Headphones", "Headphones Switch OUTR",
+		"Headphones Switch INL", "HPHL",
+		"Headphones Switch INR", "HPHR",
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS Internal2",
+		"AMIC3", "MIC BIAS External1",
+		"MM_DL1", "MultiMedia1 Playback",
+		"MM_DL3", "MultiMedia3 Playback",
+		"MM_DL4", "MultiMedia4 Playback",
+		"MultiMedia2 Capture", "MM_UL2";
+
+	status = "okay";
+};
+
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <20 4>;
 
@@ -474,8 +534,22 @@
 		bias-pull-up;
 	};
 
+	headphones_switch_default: headphones-switch-default-state {
+		pins = "gpio129";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
 	sdc2_cd_default: sdc2-cd-default-state {
 		pins = "gpio67";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	speaker_amp_default: speaker-amp-default-state {
+		pins = "gpio124";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
@@ -487,6 +561,18 @@
 		drive-strength = <8>;
 		bias-pull-up;
 	};
+};
+
+&wcd_codec {
+	qcom,hphl-jack-type-normally-open;
+	qcom,mbhc-vthreshold-high = <75 225 450 510 540>;
+	qcom,mbhc-vthreshold-low = <25 200 325 500 530>;
+	qcom,micbias1-ext-cap;
+
+	vdd-cdc-io-supply = <&pm8937_l5>;
+	vdd-cdc-tx-rx-cx-supply = <&pm8937_s4>;
+	vdd-micbias-supply = <&pm8937_l13>;
+	status = "okay";
 };
 
 &wcnss {
