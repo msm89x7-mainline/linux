@@ -345,6 +345,12 @@
 	};
 };
 
+&pmi8950_fg {
+	monitored-battery = <&battery>;
+	power-supplies = <&pmi8950_smbcharger>;
+	status = "okay";
+};
+
 &pmi8950_flash {
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -367,6 +373,11 @@
 	qcom,wave-shape = <HAP_WAVE_SQUARE>;
 	qcom,vmax-millivolt = <2700>;
 
+	status = "okay";
+};
+
+&pmi8950_smbcharger {
+	monitored-battery = <&battery>;
 	status = "okay";
 };
 
@@ -614,6 +625,20 @@
 		drive-strength = <8>;
 		bias-pull-up;
 	};
+};
+
+&usb {
+	dr_mode = "otg";
+	extcon = <&pmi8950_smbcharger>, <&pmi8950_smbcharger>;
+	vbus-supply = <&otg_vbus>;
+	status = "okay";
+};
+
+&usb_hs_phy {
+	vdd-supply = <&pm8937_l2>;
+	vdda1p8-supply = <&pm8937_l7>;
+	vdda3p3-supply = <&pm8937_l13>;
+	status = "okay";
 };
 
 &wcd_codec {
