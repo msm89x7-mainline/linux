@@ -41,6 +41,7 @@
 			reg = <0x0>;
 			device_type = "cpu";
 			enable-method = "psci";
+			clocks = <&apcs0>;
 			operating-points-v2 = <&cpu_opp_table_c0>;
 			next-level-cache = <&l2_0>;
 			#cooling-cells = <2>;
@@ -58,6 +59,7 @@
 			reg = <0x1>;
 			device_type = "cpu";
 			enable-method = "psci";
+			clocks = <&apcs0>;
 			operating-points-v2 = <&cpu_opp_table_c0>;
 			next-level-cache = <&l2_0>;
 			#cooling-cells = <2>;
@@ -68,6 +70,7 @@
 			reg = <0x2>;
 			device_type = "cpu";
 			enable-method = "psci";
+			clocks = <&apcs0>;
 			operating-points-v2 = <&cpu_opp_table_c0>;
 			next-level-cache = <&l2_0>;
 			#cooling-cells = <2>;
@@ -78,6 +81,7 @@
 			reg = <0x3>;
 			device_type = "cpu";
 			enable-method = "psci";
+			clocks = <&apcs0>;
 			operating-points-v2 = <&cpu_opp_table_c0>;
 			next-level-cache = <&l2_0>;
 			#cooling-cells = <2>;
@@ -89,6 +93,7 @@
 			device_type = "cpu";
 			next-level-cache = <&l2_1>;
 			enable-method = "psci";
+			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
 
@@ -106,6 +111,7 @@
 			device_type = "cpu";
 			next-level-cache = <&l2_1>;
 			enable-method = "psci";
+			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
 		};
@@ -116,6 +122,7 @@
 			device_type = "cpu";
 			next-level-cache = <&l2_1>;
 			enable-method = "psci";
+			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
 		};
@@ -126,6 +133,7 @@
 			device_type = "cpu";
 			next-level-cache = <&l2_1>;
 			enable-method = "psci";
+			clocks = <&apcs1>;
 			operating-points-v2 = <&cpu_opp_table_c1>;
 			#cooling-cells = <2>;
 		};
@@ -1985,12 +1993,93 @@
 			compatible = "qcom,msm8939-apcs-kpss-global", "syscon";
 			reg = <0x0b011000 0x1000>;
 			#mbox-cells = <1>;
+			clocks = <&a53pll_c1>, <&gcc GPLL0_EARLY>, <&rpmcc RPM_SMD_XO_CLK_SRC>;
+			clock-names = "pll", "aux", "ref";
+			#clock-cells = <0>;
+			assigned-clocks = <&apcs2>;
+			assigned-clock-rates = <533333333>;
+		};
+
+		a53pll_c1: clock@b016000 {
+			compatible = "qcom,msm8939-a53pll";
+			reg = <0x0b016000 0x40>;
+			clocks = <&xo_board>;
+			clock-names = "xo";
+			#clock-cells = <0>;
+			operating-points-v2 = <&pll_opp_table_c1>;
+
+			pll_opp_table_c1: opp-table {
+				compatible = "operating-points-v2";
+
+				opp-960000000 {
+					opp-hz = /bits/ 64 <960000000>;
+				};
+
+				opp-1094400000 {
+					opp-hz = /bits/ 64 <1094400000>;
+				};
+
+				opp-1209600000 {
+					opp-hz = /bits/ 64 <1209600000>;
+				};
+
+				opp-1248000000 {
+					opp-hz = /bits/ 64 <1248000000>;
+				};
+
+				opp-1344000000 {
+					opp-hz = /bits/ 64 <1344000000>;
+				};
+
+				opp-1401600000 {
+				      opp-hz = /bits/ 64 <1401600000>;
+				};
+			};
 		};
 
 		watchdog@b017000 {
 			compatible = "qcom,apss-wdt-qcs404", "qcom,kpss-wdt";
 			reg = <0x0b017000 0x1000>;
 			clocks = <&sleep_clk>;
+		};
+
+		apcs0: mailbox@b111000 {
+			compatible = "qcom,msm8939-apcs-kpss-global", "syscon";
+			reg = <0x0b111000 0x1000>;
+			#mbox-cells = <1>;
+			clocks = <&a53pll_c0>, <&gcc GPLL0_EARLY>, <&rpmcc RPM_SMD_XO_CLK_SRC>;
+			clock-names = "pll", "aux", "ref";
+			#clock-cells = <0>;
+		};
+
+		a53pll_c0: clock@b116000 {
+			compatible = "qcom,msm8939-a53pll";
+			reg = <0x0b116000 0x40>;
+			clocks = <&xo_board>;
+			clock-names = "xo";
+			#clock-cells = <0>;
+			operating-points-v2 = <&pll_opp_table_c0>;
+
+			pll_opp_table_c0: opp-table {
+				compatible = "operating-points-v2";
+
+				opp-768000000 {
+					opp-hz = /bits/ 64 <768000000>;
+				};
+
+				opp-902400000 {
+					opp-hz = /bits/ 64 <902400000>;
+				};
+
+				opp-998400000 {
+					opp-hz = /bits/ 64 <998400000>;
+				};
+
+				opp-1094400000 {
+					opp-hz = /bits/ 64 <1094400000>;
+				};
+
+			};
 		};
 
 		timer@b120000 {
@@ -2049,6 +2138,17 @@
 				interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
 				status = "disabled";
 			};
+		};
+
+		apcs2: mailbox@b1d1000 {
+			compatible = "qcom,msm8939-apcs-kpss-global", "syscon";
+			reg = <0x0b1d1000 0x1000>;
+			#mbox-cells = <1>;
+			clocks = <&gcc GPLL0_EARLY>,
+				 <&gcc GPLL0_EARLY>,
+				 <&rpmcc RPM_SMD_XO_CLK_SRC>;
+			clock-names = "pll", "aux", "ref";
+			#clock-cells = <0>;
 		};
 
 		sound: sound-card@c051000 {
