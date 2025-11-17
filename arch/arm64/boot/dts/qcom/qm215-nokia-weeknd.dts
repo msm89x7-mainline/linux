@@ -298,6 +298,10 @@
 	};
 };
 
+&blsp1_uart2 {
+	status = "okay";
+};
+
 &camss {
 	status = "okay";
 	ports {
@@ -374,8 +378,8 @@
 };
 
 &pm8916_charger {
-	qcom,vdd-safe = <4250000>;
-	qcom,ibat-safe = <360000>;
+	qcom,fast-charge-safe-current = <360000>;
+	qcom,fast-charge-safe-voltage = <4250000>;
 
 	monitored-battery = <&bat>;
 
@@ -563,7 +567,7 @@
 };
 
 &usb_hs_phy {
-	extcon = <&pm8916_charger>;
+	status = "okay";
 };
 
 &wcnss {

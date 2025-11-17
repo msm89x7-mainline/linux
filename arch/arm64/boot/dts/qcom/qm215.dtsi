@@ -2,6 +2,13 @@
 
 #include "msm8917.dtsi"
 
+&modem {
+	compatible = "qcom,qm215-mss-pil", "qcom,mdm9607-mss-pil";
+
+	power-domains = <&rpmpd QM215_VDDCX>, <&rpmpd QM215_VDDMX>;
+	power-domain-names = "cx", "mx";
+};
+
 &gcc {
 	compatible = "qcom,gcc-qm215";
 	clocks = <&xo_board>,
