@@ -39,6 +39,7 @@ enum {
 	QNOC_MASTER_VFE,
 	QNOC_MASTER_VFE1,
 	QNOC_MASTER_CPP,
+	QNOC_MASTER_IPA,
 	QNOC_MASTER_QDSS_ETR,
 	QNOC_PNOC_M_0,
 	QNOC_PNOC_M_1,
@@ -553,6 +554,24 @@ static struct qcom_icc_node mas_qdss_etr = {
 	.qos.qos_port = 10,
 	.num_links = ARRAY_SIZE(mas_qdss_etr_links),
 	.links = mas_qdss_etr_links,
+};
+
+static const u16 mas_ipa_links[] = {
+	QNOC_SNOC_INT_0,
+	QNOC_SNOC_BIMC_1_SLV
+};
+
+static struct qcom_icc_node mas_ipa = {
+	.name = "mas_ipa",
+	.id = QNOC_MASTER_IPA,
+	.buswidth = 8,
+	.qos.ap_owned = true,
+	.qos.qos_mode = NOC_QOS_MODE_FIXED,
+	.qos.prio_level = 0,
+	.qos.areq_prio = 0,
+	.qos.qos_port = 14,
+	.num_links = ARRAY_SIZE(mas_ipa_links),
+	.links = mas_ipa_links,
 };
 
 static const u16 pcnoc_m_0_links[] = {
@@ -1286,6 +1305,26 @@ static struct qcom_icc_node * const msm8937_snoc_nodes[] = {
 	[SLV_LPASS] = &slv_lpass,
 };
 
+static struct qcom_icc_node * const msm8940_snoc_nodes[] = {
+	[MAS_QDSS_BAM] = &mas_qdss_bam,
+	[MAS_BIMC_SNOC] = &mas_bimc_snoc,
+	[MAS_PCNOC_SNOC] = &mas_pcnoc_snoc,
+	[MSM8940_MAS_IPA] = &mas_ipa,
+	[MAS_QDSS_ETR] = &mas_qdss_etr,
+	[QDSS_INT] = &qdss_int,
+	[SNOC_INT_0] = &snoc_int_0,
+	[SNOC_INT_1] = &snoc_int_1,
+	[SNOC_INT_2] = &snoc_int_2,
+	[SLV_KPSS_AHB] = &slv_kpss_ahb,
+	[SLV_WCSS] = &slv_wcss,
+	[SLV_SNOC_BIMC_1] = &slv_snoc_bimc_1,
+	[SLV_IMEM] = &slv_imem,
+	[SLV_SNOC_PCNOC] = &slv_snoc_pcnoc,
+	[SLV_QDSS_STM] = &slv_qdss_stm,
+	[SLV_CATS_1] = &slv_cats_1,
+	[SLV_LPASS] = &slv_lpass,
+};
+
 static const struct regmap_config msm8937_snoc_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
@@ -1298,6 +1337,15 @@ static const struct qcom_icc_desc msm8937_snoc = {
 	.type = QCOM_ICC_NOC,
 	.nodes = msm8937_snoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8937_snoc_nodes),
+	.bus_clk_desc = &bus_1_clk,
+	.regmap_cfg = &msm8937_snoc_regmap_config,
+	.qos_offset = 0x7000,
+};
+
+static const struct qcom_icc_desc msm8940_snoc = {
+	.type = QCOM_ICC_NOC,
+	.nodes = msm8940_snoc_nodes,
+	.num_nodes = ARRAY_SIZE(msm8940_snoc_nodes),
 	.bus_clk_desc = &bus_1_clk,
 	.regmap_cfg = &msm8937_snoc_regmap_config,
 	.qos_offset = 0x7000,
@@ -1330,6 +1378,7 @@ static const struct of_device_id msm8937_noc_of_match[] = {
 	{ .compatible = "qcom,msm8937-pcnoc", .data = &msm8937_pcnoc },
 	{ .compatible = "qcom,msm8937-snoc", .data = &msm8937_snoc },
 	{ .compatible = "qcom,msm8937-snoc-mm", .data = &msm8937_snoc_mm },
+	{ .compatible = "qcom,msm8940-snoc", .data = &msm8940_snoc },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, msm8937_noc_of_match);
