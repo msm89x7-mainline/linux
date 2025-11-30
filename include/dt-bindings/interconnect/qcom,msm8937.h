@@ -78,6 +78,7 @@
 #define SLV_QDSS_STM		13
 #define SLV_CATS_1		14
 #define SLV_LPASS		15
+#define MSM8940_MAS_IPA		16
 
 /* SNOC-MM fabric */
 #define MAS_JPEG		0
