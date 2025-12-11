@@ -1,0 +1,284 @@
+// SPDX-License-Identifier: GPL-2.0
+
+/dts-v1/;
+
+#include "msm8937.dtsi"
+#include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
+
+/ {
+	qcom,board-id = <0x41 0x8100>;
+};
+
+/ {
+	framebuffer0: framebuffer@90001000 {
+		compatible = "simple-framebuffer";
+		reg = <0 (0x90001000) 0 (1080*1920*3)>;
+		//reg = <0x90000000 (720*400*4)>;
+		width = <1080>;
+		height = <1920>;
+		stride = <(1080 * 3)>;
+		format = "r8g8b8";
+//		status = "okay";
+	};
+};
+
+&smd_rpm_regulators {
+	vdd_s1-supply = <&dummy_reg0>;
+	vdd_s2-supply = <&dummy_reg0>;
+	vdd_s3-supply = <&dummy_reg0>;
+	vdd_s4-supply = <&dummy_reg0>;
+	vdd_s5-supply = <&dummy_reg0>;
+	vdd_s6-supply = <&dummy_reg0>;
+	vdd_l1_l19-supply = <&pm8937_s3>;
+	vdd_l2_l23-supply = <&pm8937_s3>;
+	vdd_l3-supply = <&pm8937_s3>;
+	vdd_l4_l5_l6_l7_l16-supply = <&pm8937_s4>;
+	vdd_l20_l21-supply = <&pm8937_s4>;
+	vdd_l8_l11_l12_l17_l22-supply = <&dummy_reg0>;
+	vdd_l9_l10_l13_l14_l15_l18-supply = <&dummy_reg0>;
+
+	/* MSM modem */
+	s1 {
+		//regulator-min-microvolt = <1000000>;
+		regulator-min-microvolt = <1225000>;
+		regulator-max-microvolt = <1225000>;
+		regulator-always-on; // XXX
+	};
+	/* VDD_CX supply */
+
+	rpm-regulator-smpa2 {
+		status = "okay";
+		pm8937_s2_level: regulator-s2-level {
+			compatible = "qcom,rpm-smd-regulator";
+			regulator-name = "pm8937_s2_level";
+			qcom,set = <3>;
+			regulator-min-microvolt =
+				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+			regulator-max-microvolt =
+				<RPM_SMD_REGULATOR_LEVEL_BINNING>;
+			qcom,use-voltage-level;
+		};
+
+		pm8937_s2_floor_level: regulator-s2-floor-level {
+			compatible = "qcom,rpm-smd-regulator";
+			regulator-name = "pm8937_s2_floor_level";
+			qcom,set = <3>;
+			regulator-min-microvolt =
+				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+			regulator-max-microvolt =
+				<RPM_SMD_REGULATOR_LEVEL_BINNING>;
+			qcom,use-voltage-floor-level;
+			qcom,always-send-voltage;
+		};
+		
+		pm8937_s2_level_ao: regulator-s2-level-ao {
+			compatible = "qcom,rpm-smd-regulator";
+			regulator-name = "pm8937_s2_level_ao";
+			qcom,set = <1>;
+			regulator-min-microvolt =
+				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+			regulator-max-microvolt =
+				<RPM_SMD_REGULATOR_LEVEL_BINNING>;
+			qcom,use-voltage-level;
+			
+		};
+
+		pm8937_cx_cdev: regulator-cx-cdev {
+			compatible = "qcom,regulator-cooling-device";
+			regulator-cdev-supply = <&pm8937_s2_floor_level>;
+			regulator-levels = <RPM_SMD_REGULATOR_LEVEL_NOM_PLUS
+					RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+			#cooling-cells = <2>;
+		};
+	};
+
+	s3 {
+		regulator-min-microvolt = <1300000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	s4 {
+		regulator-min-microvolt = <2050000>;
+		regulator-max-microvolt = <2050000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	/* MSM applications processor */
+	s5 {
+	};
+
+	/* MSM applications processor */
+	s6 {
+	};
+
+	/* RFICs */
+	l1 {
+	};
+
+	/* LPDDR2/LPDDR3, MIPI CSI, and DSI */
+	l2 {
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	/* VDD_MX supply */
+  rpm-regulator-ldoa3 {
+    status = "okay";
+    pm8937_l3_level_ao: regulator-l3-level-ao {
+      compatible = "qcom,rpm-smd-regulator";
+      regulator-name = "pm8937_l3_level_ao";
+      qcom,set = <1>;
+      regulator-min-microvolt =
+        <RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+      regulator-max-microvolt =
+        <RPM_SMD_REGULATOR_LEVEL_TURBO>;
+      qcom,use-voltage-level;
+      qcom,always-send-voltage;
+    };
+
+    pm8937_l3_level_so: regulator-l3-level-so {
+      compatible = "qcom,rpm-smd-regulator";
+      regulator-name = "pm8937_l3_level_so";
+      qcom,set = <2>;
+      regulator-min-microvolt =
+        <RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+      regulator-max-microvolt =
+        <RPM_SMD_REGULATOR_LEVEL_TURBO>;
+      qcom,init-voltage-level =
+        <RPM_SMD_REGULATOR_LEVEL_RETENTION>;
+      qcom,use-voltage-level;
+    };
+
+	/* Most digital I/Os, MSM pad groups 3 and 7, LPDDR, and eMMC */
+	l5 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	/* MSM DSI PLL and OTP, camera, touchscreen, display, and sensors */
+	l6 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	/* MSM analog and PLLs, WCN XO, and PM baseband clock driver */
+	l7 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	/* eMMC */
+	l8 {
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2900000>;
+	};
+
+	/* WCN */
+	l9 {
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	/* Sensors */
+	l10 {
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <3000000>;
+		regulator-always-on; // XXX touch
+	};
+
+	/* Micro SD */
+	l11 {
+		regulator-min-microvolt = <2950000>;
+		regulator-max-microvolt = <2950000>;
+	};
+
+	/* MSM pad group 2 and SDC2 */
+	l12 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2950000>;
+	};
+
+	/* MSM USB and audio */
+	l13 {
+		regulator-min-microvolt = <3075000>;
+		regulator-max-microvolt = <3075000>;
+		regulator-always-on; // XXX audio (micbias+)
+	};
+
+	/* MSM pad group 5, dual-voltage UIM1, and NFC */
+	l14 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	/* MSM pad group 6 and dual-voltage UIM2 */
+	l15 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	/* PMIC HKADC */
+	l16 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	/* Camera, display, and touchscreen */
+	l17 {
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2900000>;
+	};
+
+	/* QTI RF front-end */
+	l18 {
+	};
+
+	/* MSM analog, WCN, and WGR */
+	l19 {
+		regulator-min-microvolt = <1225000>;
+		regulator-max-microvolt = <1350000>;
+	};
+
+	/* Camera - analog */
+	l22 {
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+
+	/* Camera - digital */
+	l23 {
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+	};
+};
+
+&sdhc_1 {
+	status = "okay";
+
+	vmmc-supply = <&pm8937_l8>;
+	vqmmc-supply = <&pm8937_l5>;
+
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
+	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
+};
+
+&sdhc_2 {
+	status = "okay";
+
+	vmmc-supply = <&pm8937_l11>;
+	vqmmc-supply = <&pm8937_l12>;
+
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
+	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
+
+	cd-gpios = <&msmgpio 67 0>;
+};
