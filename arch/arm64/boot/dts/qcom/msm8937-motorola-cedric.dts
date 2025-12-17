@@ -42,7 +42,6 @@
 		//regulator-min-microvolt = <1000000>;
 		regulator-min-microvolt = <1225000>;
 		regulator-max-microvolt = <1225000>;
-		regulator-always-on; // XXX
 	};
 	/* VDD_CX supply */
 
