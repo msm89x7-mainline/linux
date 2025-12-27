@@ -83,6 +83,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= msm8917-xiaomi-rolex.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8917-xiaomi-tiare.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8917-xiaomi-ugglite.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8929-wingtech-wt82918hd.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-motorola-cedric.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-motorola-hannah.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-motorola-montana.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8937-xiaomi-land.dtb
