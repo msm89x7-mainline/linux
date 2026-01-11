@@ -187,6 +187,20 @@
 
 		status = "disabled";
 	};
+	
+	touchscreen@38 {
+		compatible = "edt,edt-ft5306";
+		reg = <0x38>;
+		interrupts-extended = <&tlmm 65 IRQ_TYPE_LEVEL_LOW>;
+		reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
+		vcc-supply = <&pm8937_l10>;
+		iovcc-supply = <&pm8937_l5>;
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+		pinctrl-0 = <&touchscreen_default>;
+		pinctrl-names = "default";
+		status = "disabled";
+	};
 };
 
 &camss {
@@ -554,6 +568,13 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+	
+	touchscreen_default: touchscreen-default-state {
+		pins = "gpio64", "gpio65";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
 	};
 
 	speaker_amp_default: speaker-amp-default-state {
