@@ -251,6 +251,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= sdm429-lenovo-tbx505x.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= sdm429w-fossil-hoki.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= sdm429w-mobvoi-rover.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= sdm439-nokia-panther.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sdm439-xiaomi-olive.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= sdm439-xiaomi-pine.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= sdm450-lenovo-tbx605f.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= sdm450-motorola-ali.dtb
