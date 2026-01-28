@@ -4938,6 +4938,31 @@ static const struct panel_desc arm_rtsm = {
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
+static const struct drm_display_mode huawei_agassi_mode = {
+    .clock = 86300,           /* Keep the clock from modetest */
+    .hdisplay = 800,
+    .hsync_start = 800 + 40,  /* Front Porch */
+    .hsync_end = 800 + 40 + 40, /* Sync Width */
+    .htotal = 800 + 40 + 40 + 40, /* Back Porch */
+    
+    .vdisplay = 1280,
+    .vsync_start = 1280 + 18, /* Front Porch */
+    .vsync_end = 1280 + 18 + 4, /* VSync Length (Increased from 1 to 4 to fix flicker) */
+    .vtotal = 1280 + 18 + 4 + 20, /* Back Porch */
+};
+
+static const struct panel_desc huawei_agassi = {
+    .modes = &huawei_agassi_mode,
+    .num_modes = 1,
+    .bpc = 8,
+    /* 9.6 inch display dimensions approx 129x207mm */
+    .size = {
+        .width = 129,
+        .height = 207,
+    },
+    .bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+};
+
 static const struct of_device_id platform_of_match[] = {
 	{
 		.compatible = "ampire,am-1280800n3tzqw-t00h",
@@ -5428,6 +5453,8 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "microchip,ac69t88a",
 		.data = &mchp_ac69t88a,
+	}, { .compatible = "huawei,agassi-panel",
+		 .data = &huawei_agassi
 	}, {
 		/* Must be the last entry */
 		.compatible = "panel-dpi",
