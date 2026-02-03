@@ -7,6 +7,7 @@
 
 #include <dt-bindings/arm/qcom,ids.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/leds/common.h>
 #include "sdm439.dtsi"
 #include "pm8953.dtsi"
 #include "pmi632.dtsi"
@@ -126,6 +127,20 @@
 
 &pm8953_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
+};
+
+&pmi632_lpg {
+	status = "okay";
+
+	led@1 {
+		reg = <1>;
+		color = <LED_COLOR_ID_WHITE>;
+		function = LED_FUNCTION_STATUS;
+	};
+};
+
+&pmi632_vib {
 	status = "okay";
 };
 
