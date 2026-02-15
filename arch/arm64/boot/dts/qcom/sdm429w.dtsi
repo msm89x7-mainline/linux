@@ -1,0 +1,48 @@
+
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2026, Barnabas Czeman <barnabas.czeman@mainlining.org>
+ */
+
+#include "sdm429.dtsi"
+
+&adsp {
+	power-domains = <&rpmpd SDM429W_VDDCX>;
+	power-domain-names = "cx";
+};
+
+&modem {
+	compatible = "qcom,sdm439-mss-pil";
+	power-domains = <&rpmpd SDM429W_VDDCX>,
+			<&rpmpd SDM429W_VDDMX>,
+			<&rpmpd SDM429W_VDDMD>;
+	power-domain-names = "cx", "mx", "mss";
+
+};
+
+&mdss_dsi0 {
+	power-domains = <&rpmpd SDM429W_VDDCX>;
+};
+
+&mdss_dsi1 {
+	power-domains = <&rpmpd SDM429W_VDDCX>;
+};
+
+&rpmpd {
+	compatible = "qcom,sdm429w-rpmpd";
+};
+
+&sdhc_1 {
+	power-domains = <&rpmpd SDM429W_VDDCX>;
+};
+
+&sdhc_2 {
+	power-domains = <&rpmpd SDM429W_VDDCX>;
+};
+
+&wcnss {
+	power-domains = <&rpmpd SDM429W_VDDCX>,
+			<&rpmpd SDM429W_VDDMX>;
+	power-domain-names = "cx",
+			     "mx";
+};
