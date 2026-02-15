@@ -831,6 +831,21 @@ static const struct rpmpd_desc qm215_desc = {
 	.max_state = RPM_SMD_LEVEL_TURBO,
 };
 
+static struct rpmpd *sdm439_rpmpds[] = {
+	[SDM439_VDDMD] =	&md_s1a_lvl,
+	[SDM439_VDDCX] =	&cx_s2a_lvl,
+	[SDM439_VDDCX_AO] =	&cx_s2a_lvl_ao,
+	[SDM439_VDDCX_VFL] =	&cx_s2a_vfl,
+	[SDM439_VDDMX] =	&mx_s7a_lvl,
+	[SDM439_VDDMX_AO] =	&mx_s7a_lvl_ao,
+};
+
+static const struct rpmpd_desc sdm439_desc = {
+	.rpmpds = sdm439_rpmpds,
+	.num_pds = ARRAY_SIZE(sdm439_rpmpds),
+	.max_state = RPM_SMD_LEVEL_TURBO,
+};
+
 static struct rpmpd *sdm660_rpmpds[] = {
 	[RPMPD_VDDCX] =		&cx_rwcx0_lvl,
 	[RPMPD_VDDCX_AO] =	&cx_rwcx0_lvl_ao,
@@ -941,6 +956,7 @@ static const struct of_device_id rpmpd_match_table[] = {
 	{ .compatible = "qcom,qcm2290-rpmpd", .data = &qcm2290_desc },
 	{ .compatible = "qcom,qcs404-rpmpd", .data = &qcs404_desc },
 	{ .compatible = "qcom,qm215-rpmpd", .data = &qm215_desc },
+	{ .compatible = "qcom,sdm439-rpmpd", .data = &sdm439_desc },
 	{ .compatible = "qcom,sdm660-rpmpd", .data = &sdm660_desc },
 	{ .compatible = "qcom,shikra-rpmpd", .data = &shikra_desc },
 	{ .compatible = "qcom,sm6115-rpmpd", .data = &sm6115_desc },
