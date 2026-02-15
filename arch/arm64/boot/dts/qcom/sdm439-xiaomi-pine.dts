@@ -97,6 +97,14 @@
 	status = "okay";
 };
 
+&bam_dmux {
+	status = "okay";
+};
+
+&bam_dmux_dma {
+	status = "okay";
+};
+
 &blsp1_i2c3 {
 	status = "okay";
 
@@ -115,6 +123,21 @@
 		touchscreen-size-y = <1440>;
 	};
 };
+
+&mba_mem {
+	status = "okay";
+};
+
+&modem {
+	pll-supply = <&pm8953_l7>;
+	status = "okay";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5500000>;
+	status = "okay";
+};
+
 
 &pm8953_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
