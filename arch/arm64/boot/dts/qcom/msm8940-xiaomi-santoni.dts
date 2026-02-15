@@ -183,11 +183,23 @@
 	status = "okay";
 };
 
+&gps_mem {
+	status = "okay";
+};
+
 &gpu {
 	status = "okay";
 };
 
+&ipa {
+	status = "okay";
+};
+
 &lpass_codec{
+	status = "okay";
+};
+
+&mba_mem {
 	status = "okay";
 };
 
@@ -228,6 +240,21 @@
 	vddio-supply = <&pm8937_l6>;
 	qcom,dsi-phy-regulator-ldo-mode;
 
+	status = "okay";
+};
+
+&memshare {
+	status = "okay";
+};
+
+&modem {
+	mss-supply = <&pm8937_s1>;
+	pll-supply = <&pm8937_l7>;
+	status = "okay";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5600000>;
 	status = "okay";
 };
 
