@@ -273,6 +273,7 @@ enum {
 	MSS_MSM8998,
 	MSS_SC7180,
 	MSS_SC7280,
+	MSS_SDM439,
 	MSS_SDM660,
 	MSS_SDM845,
 };
@@ -762,13 +763,15 @@ static int q6v5proc_reset(struct q6v5 *qproc)
 		   qproc->version == MSS_MSM8953 ||
 		   qproc->version == MSS_MSM8996 ||
 		   qproc->version == MSS_MSM8998 ||
+		   qproc->version == MSS_SDM439 ||
 		   qproc->version == MSS_SDM660) {
 
 		/* Override the ACC value if required */
 		if (qproc->version == MSS_MDM9607 ||
 		    qproc->version == MSS_MSM8917 ||
 		    qproc->version == MSS_MSM8937 ||
-		    qproc->version == MSS_MSM8940)
+		    qproc->version == MSS_MSM8940 ||
+		    qproc->version == MSS_SDM439)
 			writel(QDSP6SS_ACC_OVERRIDE_VAL_9607,
 			       qproc->reg_base + QDSP6SS_STRAP_ACC);
 		else if (qproc->version != MSS_MSM8909 &&
@@ -838,7 +841,8 @@ static int q6v5proc_reset(struct q6v5 *qproc)
 				reverse = 0;
 			} else if (qproc->version == MSS_MDM9607 ||
 				   qproc->version == MSS_MSM8917 ||
-				   qproc->version == MSS_MSM8937) {
+				   qproc->version == MSS_MSM8937 ||
+				   qproc->version == MSS_SDM439) {
 				mem_pwr_ctl = QDSP6SS_MEM_PWR_CTL;
 				i = 19;
 				/*
@@ -2316,6 +2320,43 @@ static const struct rproc_hexagon_res sc7280_mss = {
 	.ssctl_id = 0x12,
 };
 
+static const struct rproc_hexagon_res sdm439_mss = {
+	.hexagon_mba_image = "mba.mbn",
+	.proxy_supply = (struct qcom_mss_reg_res[]) {
+		{
+			.supply = "pll",
+			.uA = 100000,
+		},
+		{}
+	},
+	.proxy_clk_names = (char*[]){
+		"xo",
+		NULL
+	},
+	.active_clk_names = (char*[]){
+		"iface",
+		"bus",
+		"mem",
+		NULL
+	},
+	.proxy_pd_names = (char*[]) {
+		"cx",
+		"mx",
+		"mss",
+		NULL
+	},
+	.need_mem_protection = false,
+	.need_pas_mem_setup = true,
+	.has_alt_reset = false,
+	.has_mba_logs = false,
+	.has_spare_reg = false,
+	.has_qaccept_regs = false,
+	.has_ext_bhs_reg = false,
+	.has_ext_cntl_regs = false,
+	.has_vq6 = false,
+	.version = MSS_SDM439,
+};
+
 static const struct rproc_hexagon_res sdm660_mss = {
 	.hexagon_mba_image = "mba.mbn",
 	.proxy_clk_names = (char*[]){
@@ -2916,6 +2957,7 @@ static const struct of_device_id q6v5_of_match[] = {
 	{ .compatible = "qcom,msm8998-mss-pil", .data = &msm8998_mss },
 	{ .compatible = "qcom,sc7180-mss-pil", .data = &sc7180_mss },
 	{ .compatible = "qcom,sc7280-mss-pil", .data = &sc7280_mss },
+	{ .compatible = "qcom,sdm439-mss-pil", .data = &sdm439_mss},
 	{ .compatible = "qcom,sdm660-mss-pil", .data = &sdm660_mss },
 	{ .compatible = "qcom,sdm845-mss-pil", .data = &sdm845_mss },
 	{ },
