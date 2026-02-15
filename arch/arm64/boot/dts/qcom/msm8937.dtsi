@@ -13,6 +13,7 @@
 #include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
 #include <dt-bindings/sound/qcom,q6afe.h>
 #include <dt-bindings/sound/qcom,q6asm.h>
+#include <dt-bindings/soc/qcom,memshare.h>
 
 / {
 	interrupt-parent = <&intc>;
@@ -226,6 +227,29 @@
 		};
 	};
 
+	memshare: memshare {
+		compatible = "qcom,memshare";
+		qcom,legacy-client = <&memshare_gps>;
+
+		status = "disabled";
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		mpss@0 {
+			reg = <MEMSHARE_PROC_MPSS_V01>;
+			qcom,qrtr-node = <0>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			memshare_gps: gps@0 {
+				reg = <0>;
+				memory-region = <&gps_mem>;
+			};
+		};
+	};
+
 	memory@80000000 {
 		/* We expect the bootloader to fill in the reg */
 		reg = <0 0x80000000 0 0>;
@@ -282,6 +306,14 @@
 
 		adsp_mem: adsp {
 			size = <0x0 0x1100000>;
+			alignment = <0x0 0x100000>;
+			alloc-ranges = <0x0 0x86800000 0x0 0x8000000>;
+			no-map;
+			status = "disabled";
+		};
+
+		gps_mem: gps {
+			size = <0x0 0x200000>;
 			alignment = <0x0 0x100000>;
 			alloc-ranges = <0x0 0x86800000 0x0 0x8000000>;
 			no-map;
