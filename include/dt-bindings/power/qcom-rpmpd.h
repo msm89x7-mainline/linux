@@ -154,6 +154,14 @@
 #define QCS404_LPIMX		5
 #define QCS404_LPIMX_VFL	6
 
+/* SDM429W Power Domain Indexes */
+#define SDM429W_VDDMD		0
+#define SDM429W_VDDCX		1
+#define SDM429W_VDDCX_AO	2
+#define SDM429W_VDDCX_VFL	3
+#define SDM429W_VDDMX		4
+#define SDM429W_VDDMX_AO	5
+
 /* SDM439 Power Domain Indexes */
 #define SDM439_VDDMD		0
 #define SDM439_VDDCX		1

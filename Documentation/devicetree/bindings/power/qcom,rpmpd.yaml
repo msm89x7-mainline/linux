@@ -50,6 +50,7 @@ properties:
           - qcom,sc7280-rpmhpd
           - qcom,sc8180x-rpmhpd
           - qcom,sc8280xp-rpmhpd
+          - qcom,sdm429w-rpmpd
           - qcom,sdm439-rpmpd
           - qcom,sdm660-rpmpd
           - qcom,sdm670-rpmhpd
