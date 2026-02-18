@@ -668,14 +668,34 @@ config TOUCHSCREEN_MTOUCH
 	  module will be called mtouch.
 
 config TOUCHSCREEN_NOVATEK_NVT_TS
-	tristate "Novatek NT11205 touchscreen support"
+	tristate
+
+config TOUCHSCREEN_NOVATEK_NVT_TS_I2C
+	tristate "Novatek NVT I2C touchscreen support"
 	depends on I2C
+	select REGMAP_I2C
+	select TOUCHSCREEN_NOVATEK_NVT_TS
 	help
-	  Say Y here if you have a Novatek NT11205 touchscreen.
+	  Say Y here if you have a Novatek NT11205 or NT36xxx touchscreen
+	  connected via I2C.
+
 	  If unsure, say N.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called novatek-nvt-ts.
+	  module will be called novatek-nvt-ts-i2c.
+
+config TOUCHSCREEN_NOVATEK_NVT_TS_SPI
+	tristate "Novatek NVT SPI touchscreen support"
+	depends on SPI_MASTER
+	select TOUCHSCREEN_NOVATEK_NVT_TS
+	help
+	  Say Y here if you have a Novatek NT36xxx touchscreen connected
+	  via SPI, such as the NT36525 found in the Xiaomi Redmi 7.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called novatek-nvt-ts-spi.
 
 config TOUCHSCREEN_IMAGIS
 	tristate "Imagis touchscreen support"
