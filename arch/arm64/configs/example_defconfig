@@ -1,0 +1,15 @@
+--2026-03-17 17:58:51--  https://gitlab.postmarketos.org/postmarketOS/pmaports/-/raw/master/device/testing/linux-postmarketos-qcom-msm89x7/config-postmarketos-qcom-msm89x7.aarch64
+Resolving gitlab.postmarketos.org (gitlab.postmarketos.org)... 140.211.167.182
+Connecting to gitlab.postmarketos.org (gitlab.postmarketos.org)|140.211.167.182|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 213441 (208K) [text/plain]
+Saving to: ‘config-postmarketos-qcom-msm89x7.aarch64’
+
+     0K .......... .......... .......... .......... .......... 23% 85.9K 2s
+    50K .......... .......... .......... .......... .......... 47% 82.0K 1s
+   100K .......... .......... .......... .......... .......... 71% 5.89M 0s
+   150K .......... .......... .......... .......... .......... 95%  166K 0s
+   200K ........                                              100%  164M=1.5s
+
+2026-03-17 17:58:54 (139 KB/s) - ‘config-postmarketos-qcom-msm89x7.aarch64’ saved [213441/213441]
+

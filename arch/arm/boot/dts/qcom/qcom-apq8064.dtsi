@@ -982,7 +982,7 @@
 		};
 
 		sdcc4bam: dma-controller@121c2000 {
-			compatible = "qcom,bam-v1.3.0";
+			compatible = "qcom,bamqcom,wcnss-wlan-v1.3.0";
 			reg = <0x121c2000 0x8000>;
 			interrupts = <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&gcc SDC4_H_CLK>;

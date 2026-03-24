@@ -27,6 +27,14 @@ config DRM_PANEL_ARM_VERSATILE
 	  reference designs. The panel is detected using special registers
 	  in the Versatile family syscon registers.
 
+config DRM_PANEL_NT35521S_BOE
+	tristate "Novatek NT35521S BOE WXGA panel"
+	depends on DRM_MIPI_DSI
+	select VIDEOMODE_HELPERS
+	help
+	  Enable support for the Novatek NT35521S-based BOE panel 
+	  found in the Lenovo Tab 4 10 (TB-X304X).
+
 config DRM_PANEL_ASUS_Z00T_TM5P5_NT35596
 	tristate "ASUS Z00T TM5P5 NT35596 panel"
 	depends on GPIOLIB && OF
