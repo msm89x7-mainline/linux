@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2023, Dang Huynh <danct12@riseup.net>
+ */
+
+#include "msm8917.dtsi"
+
+&adsp_mem {
+	size = <0x0 0x1100000>;
+};
+
+&gps_mem {
+	size = <0x0 0x200000>;
+};
+
+&mba_mem {
+	size = <0x0 0x100000>;
+};
+
+&venus_mem {
+	size = <0x0 0x400000>;
+};
+
+&wcnss_mem {
+	size = <0x0 0x700000>;
+};
+
+&apps_iommu {
+	/* IPA */
+	iommu-ctx@18000 {
+		compatible = "qcom,msm-iommu-v1-ns";
+		reg = <0x18000 0x1000>;
+		interrupts = <GIC_SPI 115 IRQ_TYPE_LEVEL_HIGH>;
+	};
+};
+
+&rpmcc {
+	compatible = "qcom,rpmcc-msm8920", "qcom,rpmcc";
+};
+
+&soc {
+	ipa: ipa@7900000 {
+		compatible = "qcom,ipa-lite-v2.6";
+		reg = <0x7900000 0x47000>;
+		clocks = <&rpmcc RPM_SMD_IPA_CLK>;
+		interrupts = <GIC_SPI 228 IRQ_TYPE_EDGE_RISING>,
+			     <GIC_SPI 230 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "ipa", "dma";
+		iommus = <&apps_iommu 0x18>;
+		modem-remoteproc = <&modem>;
+
+		status = "disabled";
+	};
+	
+};
