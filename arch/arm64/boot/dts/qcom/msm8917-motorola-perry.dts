@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025 Val Packett
+ */
+
+/dts-v1/;
+
+#include "msm8917.dtsi"
+#include "msm8917-motorola-perry-common.dtsi"
+
+/ {
+	model = "Motorola Moto E4 (perry)";
+	compatible = "motorola,perry", "qcom,msm8917";
+	qcom,msm-id = <QCOM_ID_MSM8917 0>;
+	qcom,board-id = <0x48 0x8100>,
+			<0x48 0x80b0>,
+			<0x48 0x80a0>;
+	chassis-type = "handset";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5000000>;
+	status = "okay";
+};
+
+&bam_dmux {
+	status = "okay";
+};
+
+&bam_dmux_dma {
+	status = "okay";
+};
