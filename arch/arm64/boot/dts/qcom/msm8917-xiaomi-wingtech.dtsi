@@ -49,6 +49,10 @@
 		};
 	};
 
+	usb_vbus: extcon-usb-dummy {
+		compatible = "linux,extcon-usb-dummy";
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 
@@ -306,6 +310,19 @@
 		drive-strength = <8>;
 		bias-pull-up;
 	};
+};
+
+&usb {
+	dr_mode = "peripheral";
+	extcon = <&usb_vbus>;
+	status = "okay";
+};
+
+&usb_hs_phy {
+	vdd-supply = <&pm8937_l2>;
+	vdda1p8-supply = <&pm8937_l7>;
+	vdda3p3-supply = <&pm8937_l13>;
+	status = "okay";
 };
 
 &wcnss {
