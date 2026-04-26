@@ -13,3 +13,65 @@
 
 	qcom,board-id = <0x1000b 1>;
 };
+
+&camss {
+	vdda-supply = <&pm8937_l2>;
+	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			csiphy1_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				remote-endpoint = <&front_cam_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	pinctrl-0 = <&cci0_default>;
+	pinctrl-names = "default";
+
+	status = "okay";
+};
+
+&cci_i2c0 {
+	camera-sensor@36 {
+		compatible = "ovti,ov5675";
+
+		reg = <0x36>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK2_CLK>;
+
+		pinctrl-0 = <&cam_sensor_front_default>, <&camss_mclk2_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+
+		avdd-supply= <&pm8937_l22>;
+		dvdd-supply = <&pm8937_l23>;
+		dovdd-supply = <&pm8937_l6>;
+		orientation = <0>;
+		rotation = <90>;
+
+		port {
+			front_cam_ep: endpoint {
+				data-lanes = <0 1>;
+				remote-endpoint = <&csiphy1_ep>;
+				link-frequencies = /bits/ 64 <450000000>;
+			};
+		};
+	};
+};
+
+&tlmm {
+	cam_sensor_front_default: cam-sensor-front-default-state {
+		pins = "gpio39", "gpio40";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+};
