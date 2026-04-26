@@ -90,6 +90,12 @@
 		};
 	};
 
+	vibrator {
+		compatible = "gpio-vibrator";
+		enable-gpios = <&tlmm 97 GPIO_ACTIVE_HIGH>;
+	};
+};
+
 &blsp1_i2c2 {
 	status = "okay";
 
