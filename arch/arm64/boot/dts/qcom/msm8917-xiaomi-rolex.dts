@@ -71,6 +71,16 @@
 	compatible = "xiaomi,rolex-panel";
 };
 
+&sound {
+	model = "xiaomi-rolex";
+};
+
+&speaker_amp {
+	awinic,mode = <5>;
+
+	status = "okay";
+};
+
 &tlmm {
 	cam_sensor_front_default: cam-sensor-front-default-state {
 		pins = "gpio39", "gpio40";

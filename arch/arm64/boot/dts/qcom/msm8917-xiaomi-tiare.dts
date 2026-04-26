@@ -22,3 +22,24 @@
 	regulator-min-microvolt = <2850000>;
 	regulator-max-microvolt = <2850000>;
 };
+
+&sound {
+	model = "xiaomi-tiare";
+
+	aux-devs = <&headphones_switch>;
+	widgets =
+		"Headphone", "Headphones";
+	pin-switches = "Headphones";
+	audio-routing =
+		"Headphones", "Headphones Switch OUTL",
+		"Headphones", "Headphones Switch OUTR",
+		"Headphones Switch INL", "HPHL",
+		"Headphones Switch INR", "HPHR",
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS Internal2",
+		"AMIC3", "MIC BIAS External1",
+		"MM_DL1", "MultiMedia1 Playback",
+		"MM_DL3", "MultiMedia3 Playback",
+		"MM_DL4", "MultiMedia4 Playback",
+		"MultiMedia2 Capture", "MM_UL2";
+};

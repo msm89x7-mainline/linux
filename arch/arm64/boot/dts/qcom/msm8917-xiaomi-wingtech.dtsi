@@ -9,6 +9,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include "msm8917.dtsi"
 #include "pm8937.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 /delete-node/ &qseecom_mem;
 
@@ -16,6 +17,24 @@
 	chassis-type = "handset";
 
 	qcom,msm-id = <QCOM_ID_MSM8917 0>;
+
+	speaker_amp: audio-amplifier {
+		compatible = "awinic,aw8738";
+		mode-gpios = <&tlmm 124 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "Speaker Amp";
+		pinctrl-0 = <&speaker_amp_default>;
+		pinctrl-names = "default";
+
+		status = "disabled";
+	};
+
+	headphones_switch: audio-switch {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&tlmm 129 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "Headphones Switch";
+		pinctrl-0 = <&headphones_switch_default>;
+		pinctrl-names = "default";
+	};
 
 	pwm_backlight: backlight {
 		compatible = "pwm-backlight";
@@ -96,6 +115,18 @@
 	};
 };
 
+&adsp {
+	status = "okay";
+};
+
+&adsp_mem {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
+};
+
 &bam_dmux {
 	status = "okay";
 };
@@ -173,6 +204,10 @@
 };
 
 &gpu {
+	status = "okay";
+};
+
+&lpass_codec{
 	status = "okay";
 };
 
@@ -402,12 +437,43 @@
 	clock-frequency = <32768>;
 };
 
+&sound {
+	aux-devs = <&speaker_amp>, <&headphones_switch>;
+	widgets =
+		"Speaker", "Speaker",
+		"Headphone", "Headphones";
+	pin-switches = "Speaker", "Headphones";
+	audio-routing =
+		"Speaker", "Speaker Amp OUT",
+		"Speaker Amp IN", "HPHR",
+		"Headphones", "Headphones Switch OUTL",
+		"Headphones", "Headphones Switch OUTR",
+		"Headphones Switch INL", "HPHL",
+		"Headphones Switch INR", "HPHR",
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS Internal2",
+		"AMIC3", "MIC BIAS External1",
+		"MM_DL1", "MultiMedia1 Playback",
+		"MM_DL3", "MultiMedia3 Playback",
+		"MM_DL4", "MultiMedia4 Playback",
+		"MultiMedia2 Capture", "MM_UL2";
+
+	status = "okay";
+};
+
 &tlmm {
 	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio91";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-pull-up;
+	};
+
+	headphones_switch_default: headphones-switch-default-state {
+		pins = "gpio129";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
 	};
 
 	panel_default: panel-default-state {
@@ -420,6 +486,13 @@
 
 	sdc2_cd_default: sdc2-cd-default-state {
 		pins = "gpio67";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	speaker_amp_default: speaker-amp-default-state {
+		pins = "gpio124";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
@@ -458,6 +531,18 @@
 };
 
 &venus_mem {
+	status = "okay";
+};
+
+&wcd_codec {
+	qcom,hphl-jack-type-normally-open;
+	qcom,mbhc-vthreshold-high = <75 225 450 510 540>;
+	qcom,mbhc-vthreshold-low = <25 200 325 500 530>;
+	qcom,micbias1-ext-cap;
+
+	vdd-cdc-io-supply = <&pm8937_l5>;
+	vdd-cdc-tx-rx-cx-supply = <&pm8937_s4>;
+	vdd-micbias-supply = <&pm8937_l13>;
 	status = "okay";
 };
 
