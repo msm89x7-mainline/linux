@@ -43,6 +43,9 @@
 		input-voltage-limit-microvolt = <4400000>;
 		input-current-limit-microamp = <1000000>;
 		monitored-battery = <&battery>;
+
+		// TODO: remove when power-supplies property is fixed
+		omit-battery-class;
 	};
 };
 
