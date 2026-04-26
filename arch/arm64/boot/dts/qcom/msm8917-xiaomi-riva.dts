@@ -49,6 +49,10 @@
 	};
 };
 
+&panel {
+	compatible = "xiaomi,riva-panel";
+};
+
 &tlmm {
 	bq25601_int_default: bq25601-int-default-state {
 		pins = "gpio61";

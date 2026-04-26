@@ -46,6 +46,8 @@
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
+
+			status = "disabled";
 		};
 	};
 
@@ -87,6 +89,34 @@
 			no-map;
 		};
 	};
+
+&blsp1_i2c2 {
+	status = "okay";
+
+	regulator@3e {
+		compatible = "ti,tps65132";
+		reg = <0x3e>;
+		vin-supply = <&pm8937_l5>;
+
+		pinctrl-0 = <&tps65132_en_default>;
+		pinctrl-names = "default";
+
+		reg_lcd_pos: outp {
+			regulator-name = "outp";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			enable-gpios = <&tlmm 126 GPIO_ACTIVE_HIGH>;
+			regulator-active-discharge = <1>;
+		};
+
+		reg_lcd_neg: outn {
+			regulator-name = "outn";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			enable-gpios = <&tlmm 127 GPIO_ACTIVE_HIGH>;
+			regulator-active-discharge = <1>;
+		};
+	};
 };
 
 &blsp1_i2c3 {
@@ -122,6 +152,50 @@
 
 		status = "disabled";
 	};
+};
+
+&gpu {
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	vdda-supply = <&pm8937_l2>;
+	vddio-supply = <&pm8937_l6>;
+
+	panel: panel@0 {
+		compatible = "xiaomi,riva-panel";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 60 GPIO_ACTIVE_LOW>;
+
+		vsn-supply = <&reg_lcd_neg>;
+		vsp-supply = <&reg_lcd_pos>;
+
+		backlight = <&pwm_backlight>;
+
+		pinctrl-0 = <&panel_default>;
+		pinctrl-names = "default";
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vddio-supply = <&pm8937_l6>;
+	qcom,dsi-phy-regulator-ldo-mode;
 };
 
 &pm8937_gpios {
@@ -297,11 +371,26 @@
 		bias-pull-up;
 	};
 
+	panel_default: panel-default-state {
+		pins = "gpio60";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
 	sdc2_cd_default: sdc2-cd-default-state {
 		pins = "gpio67";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	tps65132_en_default: tps65132-en-default-state {
+		pins = "gpio126", "gpio127";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
 	};
 
 	tsp_int_rst_default: tsp-int-rst-default-state {

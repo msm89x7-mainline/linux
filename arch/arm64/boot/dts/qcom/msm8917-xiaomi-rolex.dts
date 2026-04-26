@@ -67,6 +67,10 @@
 	};
 };
 
+&panel {
+	compatible = "xiaomi,rolex-panel";
+};
+
 &tlmm {
 	cam_sensor_front_default: cam-sensor-front-default-state {
 		pins = "gpio39", "gpio40";
