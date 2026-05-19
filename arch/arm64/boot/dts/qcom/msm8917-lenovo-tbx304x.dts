@@ -39,14 +39,14 @@
 			height = <1280>;
 			stride = <(800 * 3)>;
 			format = "r8g8b8";
-			clocks = <&gcc 116>,
-					 <&gcc 117>,
-					 <&gcc 125>,
-					 <&gcc 122>,
-					 <&gcc 118>,
-					 <&gcc 123>,
-					 <&gcc 120>;
-			power-domains = <&gcc 2>;
+			clocks = <&gcc GCC_MDSS_AHB_CLK>,
+					 <&gcc GCC_MDSS_AXI_CLK>,
+					 <&gcc GCC_MDSS_VSYNC_CLK>,
+					 <&gcc GCC_MDSS_MDP_CLK>,
+					 <&gcc GCC_MDSS_BYTE0_CLK>,
+					 <&gcc GCC_MDSS_PCLK0_CLK>,
+					 <&gcc GCC_MDSS_ESC0_CLK>;
+			power-domains = <&gcc MDSS_GDSC>;
 			status = "okay";
 		};
 	};
@@ -157,7 +157,7 @@
 		};
 
 		pm8937_l12: l12 {
-			regulator-min-microvolt = <1800000>;
+			regulator-min-microvolt = <2950000>;
 			regulator-max-microvolt = <2950000>;
 		};
 
@@ -210,6 +210,8 @@
 };
 
 &sdhc_2 {
+	vmmc-supply = <&pm8937_l11>;
+	vqmmc-supply = <&pm8937_l12>;
 	pinctrl-0 = <&sdc2_default &sdc2_cd_default>;
 	pinctrl-1 = <&sdc2_sleep &sdc2_cd_default>;
 	pinctrl-names = "default", "sleep";
@@ -224,6 +226,7 @@
 };
 
 &usb {
+	dr_mode = "peripheral";
 	extcon = <&usb_vbus>;
 	status = "okay";
 };
@@ -300,6 +303,8 @@
 
 		touchscreen-size-x = <800>;
 		touchscreen-size-y = <1280>;
+		touchscreen-inverted-x;
+		touchscreen-inverted-y;
 	};
 };
 
