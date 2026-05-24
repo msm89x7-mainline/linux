@@ -8,6 +8,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include "msm8917.dtsi"
 #include "pm8937.dtsi"
+#include "pmi8950.dtsi"
 #include "msm8937-qdsp6.dtsi"
 
 / {
@@ -40,12 +41,12 @@
 			stride = <(800 * 3)>;
 			format = "r8g8b8";
 			clocks = <&gcc GCC_MDSS_AHB_CLK>,
-					 <&gcc GCC_MDSS_AXI_CLK>,
-					 <&gcc GCC_MDSS_VSYNC_CLK>,
-					 <&gcc GCC_MDSS_MDP_CLK>,
-					 <&gcc GCC_MDSS_BYTE0_CLK>,
-					 <&gcc GCC_MDSS_PCLK0_CLK>,
-					 <&gcc GCC_MDSS_ESC0_CLK>;
+				 <&gcc GCC_MDSS_AXI_CLK>,
+				 <&gcc GCC_MDSS_VSYNC_CLK>,
+				 <&gcc GCC_MDSS_MDP_CLK>,
+				 <&gcc GCC_MDSS_BYTE0_CLK>,
+				 <&gcc GCC_MDSS_PCLK0_CLK>,
+				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
 			status = "okay";
 		};
@@ -81,7 +82,7 @@
 		regulator-name = "lcd_3v3";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		gpio = <&tlmm 97 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 46 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		vin-supply = <&vph_pwr>;
 	};
@@ -203,6 +204,10 @@
 	};
 };
 
+&venus {
+	status = "disabled";
+};
+
 &sdhc_1 {
 	vmmc-supply = <&pm8937_l8>;
 	vqmmc-supply = <&pm8937_l5>;
@@ -216,8 +221,10 @@
 	pinctrl-1 = <&sdc2_sleep &sdc2_cd_default>;
 	pinctrl-names = "default", "sleep";
 
-	cd-gpios = <&tlmm 67 GPIO_ACTIVE_LOW>;
+	cd-gpios = <&tlmm 67 GPIO_ACTIVE_HIGH>;
 
+	//no-sdio;
+	//no-mmc;
 	status = "okay";
 };
 
@@ -243,6 +250,14 @@
 	clock-frequency = <19200000>;
 };
 
+&pmi8950_wled {
+	qcom,num-strings = <3>;
+	qcom,external-pfet;
+	qcom,current-limit-microamp = <20000>;
+	qcom,ovp-millivolt = <29500>;
+	status = "okay";
+};
+
 &mdss {
 	status = "okay";
 };
@@ -253,28 +268,14 @@
 	vdd-supply = <&pm8937_l17>;
 	vcc-supply = <&pm8937_l6>;
 
-	ports {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		port@1 {
-			reg = <1>;
-
-			dsi0_out: endpoint {
-				remote-endpoint = <&panel_in>;
-			};
-		};
-	};
-
 	panel@0 {
-		compatible = "mdss,nt35521s-boe";
+		compatible = "lenovo,tbx304x-nt35521s-boe";
 		reg = <0>;
 
-		reset-gpios = <&tlmm 61 GPIO_ACTIVE_LOW>;
-
-		iovcc-supply = <&lcd_3v3>;
-		vcc-supply = <&pm8937_l6>;
-		VDDIO-supply = <&pm8937_l6>;
+		reset-gpios = <&tlmm 60 GPIO_ACTIVE_LOW>;
+		backlight = <&pmi8950_wled>;
+		pinctrl-0 = <&panel_default>;
+		pinctrl-names = "default";
 
 		port {
 			panel_in: endpoint {
@@ -285,6 +286,31 @@
 };
 
 &mdss_dsi0_out {
+	status = "okay";
+};
+
+&gpu {
+	status = "okay";
+};
+
+&wcnss {
+	status = "okay";
+	vddpx-supply = <&pm8937_l5>;
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3610";
+	vddxo-supply = <&pm8937_l7>;
+	vddrfa-supply = <&pm8937_l19>;
+	vddpa-supply = <&pm8937_l9>;
+	vdddig-supply = <&pm8937_l5>;
+};
+
+&wcnss_mem {
+	status = "okay";
+};
+
+&blsp1_i2c2 {
 	status = "okay";
 };
 
@@ -317,6 +343,14 @@
 		pins = "gpio67";
 		function = "gpio";
 		drive-strength = <2>;
+		bias-pull-up;
+	};
+
+	panel_default: panel-default-state {
+		pins = "gpio60";
+		function = "gpio";
+		drive-strength = <8>;
 		bias-disable;
+		output-high;
 	};
 };
