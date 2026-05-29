@@ -25,6 +25,21 @@
 		serial0 = &blsp1_uart1;
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+
+		charge-full-design-microamp-hours = <7000000>;
+		constant-charge-current-max-microamp = <2000000>;
+		energy-full-design-microwatt-hours = <26950000>;
+
+		voltage-min-design-microvolt = <3400000>;
+
+		voltage-max-design-microvolt = <4400000>;
+		constant-charge-voltage-max-microvolt = <4400000>;
+
+		charge-term-current-microamp = <270000>;
+	};
+
 	chosen {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -48,7 +63,7 @@
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
-			status = "okay";
+			status = "disabled";
 		};
 	};
 
@@ -73,10 +88,6 @@
 		regulator-boot-on;
 	};
 
-	usb_vbus: extcon-usb-dummy {
-		compatible = "linux,extcon-usb-dummy";
-	};
-
 	lcd_3v3: lcd-3v3-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "lcd_3v3";
@@ -85,6 +96,15 @@
 		gpio = <&tlmm 46 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		vin-supply = <&vph_pwr>;
+	};
+
+	i2c-sensors {
+		compatible = "i2c-gpio";
+		sda-gpios = <&tlmm 14 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&tlmm 15 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		i2c-gpio,delay-us = <2>; /* ~100 kHz */
+		#address-cells = <1>;
+		#size-cells = <0>;
 	};
 };
 
@@ -204,6 +224,17 @@
 	};
 };
 
+&pmi8950_fg {
+	monitored-battery = <&battery>;
+	power-supplies = <&pmi8950_smbcharger>;
+	status = "okay";
+};
+
+&pmi8950_smbcharger {
+	monitored-battery = <&battery>;
+	status = "okay";
+};
+
 &venus {
 	status = "disabled";
 };
@@ -233,8 +264,9 @@
 };
 
 &usb {
-	dr_mode = "peripheral";
-	extcon = <&usb_vbus>;
+	dr_mode = "otg";
+	extcon = <&pmi8950_smbcharger>, <&pmi8950_smbcharger>;
+	vbus-supply = <&otg_vbus>;
 	status = "okay";
 };
 
@@ -251,9 +283,9 @@
 };
 
 &pmi8950_wled {
-	qcom,num-strings = <3>;
+	qcom,num-strings = <4>;
 	qcom,external-pfet;
-	qcom,current-limit-microamp = <20000>;
+	qcom,current-limit-microamp = <22500>;
 	qcom,ovp-millivolt = <29500>;
 	status = "okay";
 };
@@ -263,10 +295,10 @@
 };
 
 &mdss_dsi0 {
-	status = "okay";
+	vdda-supply = <&pm8937_l2>;
+	vddio-supply = <&pm8937_l6>;
 
-	vdd-supply = <&pm8937_l17>;
-	vcc-supply = <&pm8937_l6>;
+	status = "okay";
 
 	panel@0 {
 		compatible = "lenovo,tbx304x-nt35521s-boe";
@@ -274,18 +306,26 @@
 
 		reset-gpios = <&tlmm 60 GPIO_ACTIVE_LOW>;
 		backlight = <&pmi8950_wled>;
+
 		pinctrl-0 = <&panel_default>;
 		pinctrl-names = "default";
 
+		power-supply = <&lcd_3v3>;
+
 		port {
 			panel_in: endpoint {
-				remote-endpoint = <&dsi0_out>;
+				remote-endpoint = <&mdss_dsi0_out>;
 			};
 		};
 	};
 };
 
 &mdss_dsi0_out {
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vddio-supply = <&pm8937_l6>;
 	status = "okay";
 };
 
@@ -307,6 +347,14 @@
 };
 
 &wcnss_mem {
+	status = "okay";
+};
+
+&adsp {
+	status = "okay";
+};
+
+&adsp_mem {
 	status = "okay";
 };
 
