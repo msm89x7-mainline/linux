@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025, Barnabas Czeman
+ */
+
+/dts-v1/;
+
+#include "msm8917.dtsi"
+#include "motorola-hannah-common.dtsi"
+
+/ {
+	compatible = "motorola,hannah", "qcom,msm8917";
+	qcom,msm-id = <QCOM_ID_MSM8917 0>;
+};
+
+&wcnss_ctrl {
+	firmware-name = "qcom/msm8917/motorola/hannah/WCNSS_qcom_wlan_nv.bin";
+};
