@@ -83,6 +83,35 @@
 	status = "okay";
 };
 
+&bam_dmux {
+	status = "okay";
+};
+
+&bam_dmux_dma {
+	status = "okay";
+};
+
+&mba_mem {
+	status = "okay";
+};
+
+&memshare {
+	status = "okay";
+};
+
+&modem {
+	mss-supply = <&pm8937_s1>;
+	pll-supply = <&pm8937_l7>;
+
+	status = "okay";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5500000>;
+
+	status = "okay";
+};
+
 &mdss_dsi0 {
 	vdda-supply = <&pm8937_l2>;
 	vddio-supply = <&pm8937_l6>;
@@ -119,6 +148,7 @@
 
 &pm8937_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
+
 	status = "okay";
 };
 
@@ -135,11 +165,13 @@
 &pmi8950_fg {
 	monitored-battery = <&battery>;
 	power-supplies = <&pmi8950_smbcharger>;
+
 	status = "okay";
 };
 
 &pmi8950_smbcharger {
 	monitored-battery = <&battery>;
+
 	status = "okay";
 };
 
@@ -344,6 +376,7 @@
 	dr_mode = "otg";
 	extcon = <&pmi8950_smbcharger>, <&usb_id>;
 	vbus-supply = <&otg_vbus>;
+
 	status = "okay";
 };
 
@@ -351,11 +384,13 @@
 	vdd-supply = <&pm8937_l2>;
 	vdda1p8-supply = <&pm8937_l7>;
 	vdda3p3-supply = <&pm8937_l13>;
+
 	status = "okay";
 };
 
 &wcnss {
 	vddpx-supply = <&pm8937_l5>;
+
 	status = "okay";
 };
 
@@ -364,6 +399,7 @@
 	vdd-cdc-io-supply = <&pm8937_l5>;
 	vdd-cdc-tx-rx-cx-supply = <&pm8937_s4>;
 	vdd-micbias-supply = <&pm8937_l13>;
+
 	status = "okay";
 };
 

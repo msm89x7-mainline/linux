@@ -47,6 +47,7 @@
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
+
 			status = "disabled";
 		};
 	};
@@ -88,6 +89,7 @@
 
 &blsp1_i2c2 {
 	clock-frequency = <400000>;
+
 	status = "okay";
 
 	proximity@28 {

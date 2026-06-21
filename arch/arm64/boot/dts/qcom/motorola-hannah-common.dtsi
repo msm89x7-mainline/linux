@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
  * Copyright (c) 2025, Barnabas Czeman
+ * Copyright (c) 2025 Vall Packett
  */
 
 #include "msm89x7-motorola-common.dtsi"
@@ -42,6 +43,7 @@
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
+
 			status = "disabled";
 		};
 	};
@@ -51,6 +53,26 @@
 			reg = <0x0 0x90001000 0x0 (720 * 1440 * 3)>;
 			no-map;
 		};
+	};
+};
+
+&blsp1_i2c2 {
+	status = "okay";
+
+	proximity@28 {
+		compatible = "semtech,sx9310";
+		reg = <0x28>;
+		#io-channel-cells = <1>;
+		pinctrl-0 = <&sx9310_default>;
+		pinctrl-names = "default";
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <59 IRQ_TYPE_LEVEL_LOW>;
+
+		vdd-supply = <&pm8937_l10>;
+		svdd-supply = <&pm8937_l5>;
+
+		label = "proximity-bottom";
 	};
 };
 
@@ -78,6 +100,7 @@
 &pmi8950_flash {
 	#address-cells = <1>;
 	#size-cells = <0>;
+
 	status = "okay";
 
 	led@0 {
@@ -122,10 +145,19 @@
 		drive-strength = <2>;
 		bias-disable;
 	};
+
+	sx9310_default: sx9310-default-state {
+		pins = "gpio59";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+		input-enable;
+	};
 };
 
 &camss {
 	vdda-supply = <&pm8937_l2>;
+
 	status = "okay";
 
 	ports {
