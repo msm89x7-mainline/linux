@@ -83,6 +83,35 @@
 	status = "okay";
 };
 
+&bam_dmux {
+	status = "okay";
+};
+
+&bam_dmux_dma {
+	status = "okay";
+};
+
+&mba_mem {
+	status = "okay";
+};
+
+&memshare {
+	status = "okay";
+};
+
+&modem {
+	mss-supply = <&pm8937_s1>;
+	pll-supply = <&pm8937_l7>;
+
+	status = "okay";
+};
+
+&mpss_mem {
+	reg = <0x0 0x86800000 0x0 0x5500000>;
+
+	status = "okay";
+};
+
 &mdss_dsi0 {
 	vdda-supply = <&pm8937_l2>;
 	vddio-supply = <&pm8937_l6>;

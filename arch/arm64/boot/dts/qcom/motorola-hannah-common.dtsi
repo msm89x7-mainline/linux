@@ -55,6 +55,26 @@
 	};
 };
 
+&blsp1_i2c2 {
+	status = "okay";
+
+	proximity@28 {
+		compatible = "semtech,sx9310";
+		reg = <0x28>;
+		#io-channel-cells = <1>;
+		pinctrl-0 = <&sx9310_default>;
+		pinctrl-names = "default";
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <59 IRQ_TYPE_LEVEL_LOW>;
+
+		vdd-supply = <&pm8937_l10>;
+		svdd-supply = <&pm8937_l5>;
+
+		label = "proximity-bottom";
+	};
+};
+
 &blsp1_i2c3 {
 	status = "okay";
 
@@ -123,6 +143,14 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	sx9310_default: sx9310-default-state {
+		pins = "gpio59";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+		input-enable;
 	};
 };
 
