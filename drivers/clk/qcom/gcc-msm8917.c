@@ -749,10 +749,22 @@ static struct clk_rcg2 cpp_clk_src = {
 	}
 };
 
+static const struct parent_map gcc_vcodec0_map_msm8937[] = {
+	{ P_XO, 0 },
+	{ P_GPLL0, 1 },
+	{ P_GPLL6, 2 },
+};
+
+static const struct clk_parent_data gcc_vcodec0_data_msm8937[] = {
+	{ .index = DT_XO },
+	{ .hw = &gpll0.clkr.hw },
+	{ .hw = &gpll6.hw },
+};
+
 static struct clk_init_data vcodec0_clk_src_init_msm8937 = {
 	.name = "vcodec0_clk_src",
-	.parent_data = gcc_cpp_data,
-	.num_parents = ARRAY_SIZE(gcc_cpp_data),
+	.parent_data = gcc_vcodec0_data_msm8937,
+	.num_parents = ARRAY_SIZE(gcc_vcodec0_data_msm8937),
 	.ops = &clk_rcg2_ops,
 };
 
@@ -4101,7 +4113,7 @@ static void msm8937_clock_override(void)
 	/*
 	 * Set below clocks for use specific msm8937 parent map.
 	 */
-	vcodec0_clk_src.parent_map = gcc_cpp_map;
+	vcodec0_clk_src.parent_map = gcc_vcodec0_map_msm8937;
 	vcodec0_clk_src.clkr.hw.init = &vcodec0_clk_src_init_msm8937;
 
 	/*
@@ -4118,7 +4130,7 @@ static void msm8937_clock_override(void)
 
 static void sdm439_clock_override(void)
 {
-	vcodec0_clk_src.parent_map = gcc_cpp_map;
+	vcodec0_clk_src.parent_map = gcc_vcodec0_map_msm8937;
 	vcodec0_clk_src.clkr.hw.init = &vcodec0_clk_src_init_msm8937;
 
 	vfe0_clk_src.freq_tbl = ftbl_vfe_clk_src_msm8937;
