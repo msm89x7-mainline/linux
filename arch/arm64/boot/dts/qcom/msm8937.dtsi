@@ -1564,6 +1564,50 @@
 			};
 		};
 
+		venus: venus@1d00000 {
+			compatible = "qcom,msm8937-venus";
+			reg = <0x1d00000 0xff000>;
+			clocks = <&gcc GCC_VENUS0_VCODEC0_CLK>,
+				 <&gcc GCC_VENUS0_AHB_CLK>,
+				 <&gcc GCC_VENUS0_AXI_CLK>,
+				 <&gcc GCC_VENUS0_CORE0_VCODEC0_CLK>;
+			clock-names = "core", "iface", "bus", "vcodec0_core";
+			interrupts = <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>;
+			iommus = <&apps_iommu 0x16>;
+			memory-region = <&venus_mem>;
+			power-domains = <&gcc VENUS_GDSC>, <&gcc VENUS_CORE0_GDSC>;
+			power-domain-names = "venus", "vcodec0";
+
+			venus_opp_table: opp-table {
+				compatible = "operating-points-v2";
+
+				opp-166150000 {
+					opp-hz = /bits/ 64 <166150000>;
+					required-opps = <&rpmpd_opp_min_svs>;
+				};
+
+				opp-240000000 {
+					opp-hz = /bits/ 64 <240000000>;
+					required-opps = <&rpmpd_opp_low_svs>;
+				};
+
+				opp-308571428 {
+					opp-hz = /bits/ 64 <308571428>;
+					required-opps = <&rpmpd_opp_nom>;
+				};
+
+				opp-320000000 {
+					opp-hz = /bits/ 64 <320000000>;
+					required-opps = <&rpmpd_opp_nom_plus>;
+				};
+
+				opp-360000000 {
+					opp-hz = /bits/ 64 <360000000>;
+					required-opps = <&rpmpd_opp_turbo>;
+				};
+			};
+		};
+
 		gpu: gpu@1c00000 {
 			compatible = "qcom,adreno-505.0", "qcom,adreno";
 			reg = <0x01c00000 0x40000>;
@@ -1684,7 +1728,7 @@
 
 			/* VENUS_NS */
 			iommu-ctx@16000 {
-				compatible = "qcom,msm-iommu-v1-ns";
+				compatible = "qcom,msm-iommu-v1-sec";
 				reg = <0x16000 0x1000>;
 				interrupts = <GIC_SPI 113 IRQ_TYPE_LEVEL_HIGH>;
 			};
