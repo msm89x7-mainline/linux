@@ -331,6 +331,14 @@
 	};
 };
 
+&venus {
+	status = "okay";
+};
+
+&venus_mem {
+	status = "okay";
+};
+
 &usb {
 	dr_mode = "peripheral";
 	extcon = <&usb_vbus>;
