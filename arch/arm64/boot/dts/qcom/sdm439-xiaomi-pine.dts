@@ -334,6 +334,14 @@
 	status = "okay";
 };
 
+&venus {
+	status = "okay";
+};
+
+&venus_mem {
+	status = "okay";
+};
+
 &wcnss {
 	vddpx-supply = <&pm8953_l5>;
 	status = "okay";
