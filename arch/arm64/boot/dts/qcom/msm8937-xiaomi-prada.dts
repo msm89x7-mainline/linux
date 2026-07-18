@@ -622,6 +622,14 @@
 
 };
 
+&venus {
+	status = "okay";
+};
+
+&venus_mem {
+	status = "okay";
+};
+
 &wcnss_iris {
 	compatible = "qcom,wcn3660b";
 	vddxo-supply = <&pm8937_l7>;
