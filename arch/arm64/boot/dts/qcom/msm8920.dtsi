@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (c) 2023, Dang Huynh <danct12@riseup.net>
+ * Copyright (c) 2026, Aneesh Pradhan <aneeshpradhan@acm.org>
+ */
+
+#include "msm8917.dtsi"
+
+&apps_iommu {
+	/* IPA */
+	iommu-ctx@18000 {
+		compatible = "qcom,msm-iommu-v1-ns";
+		reg = <0x18000 0x1000>;
+		interrupts = <GIC_SPI 115 IRQ_TYPE_LEVEL_HIGH>;
+	};
+};
+
+&rpmcc {
+	compatible = "qcom,rpmcc-msm8920", "qcom,rpmcc";
+};
+
+&soc {
+	ipa: ipa@7900000 {
+		compatible = "qcom,ipa-lite-v2.6";
+		reg = <0x7900000 0x47000>;
+		clocks = <&rpmcc RPM_SMD_IPA_CLK>;
+		interrupts = <GIC_SPI 228 IRQ_TYPE_EDGE_RISING>,
+			     <GIC_SPI 230 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "ipa", "dma";
+		iommus = <&apps_iommu 0x18>;
+		modem-remoteproc = <&modem>;
+
+		status = "disabled";
+	};
+};
