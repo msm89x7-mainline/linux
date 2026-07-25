@@ -1,3 +1,6 @@
+obj-$(CONFIG_DRM_PANEL_LENOVO_TBX304X_JD9364_BOE) += panel-lenovo-tbx304x-jd9364-boe.o
+obj-$(CONFIG_DRM_PANEL_LENOVO_TBX304X_NT35521S_BOE) += panel-lenovo-tbx304x-nt35521s-boe.o
+obj-$(CONFIG_DRM_PANEL_LENOVO_TBX304X_NT35521S) += panel-lenovo-tbx304x-nt35521s.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_INX) += panel-motorola-cedric-nt35596-inx.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_CEDRIC_NT35596_TIANMA) += panel-motorola-cedric-nt35596-tianma.o
 obj-$(CONFIG_DRM_PANEL_MOTOROLA_HANNAH_599_DJN) += panel-motorola-hannah-599-djn.o

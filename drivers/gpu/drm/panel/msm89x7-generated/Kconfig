@@ -5,6 +5,18 @@ menu "MSM89x7 panel drivers generated with linux-mdss-dsi-panel-driver-generator
 config DRM_PANEL_MSM89X7_GENERATED
 	tristate "Select all generated MSM89X7 panel drivers by default"
 
+config DRM_PANEL_LENOVO_TBX304X_JD9364_BOE
+	tristate "Lenovo TBX304X JD9364 BOE"
+	default DRM_PANEL_MSM89X7_GENERATED
+
+config DRM_PANEL_LENOVO_TBX304X_NT35521S_BOE
+	tristate "Lenovo TBX304X NT35521S BOE"
+	default DRM_PANEL_MSM89X7_GENERATED
+
+config DRM_PANEL_LENOVO_TBX304X_NT35521S
+	tristate "Lenovo TBX304X NT35521S"
+	default DRM_PANEL_MSM89X7_GENERATED
+
 config DRM_PANEL_MOTOROLA_CEDRIC_NT35596_INX
 	tristate "Motorola CEDRIC NT35596 INX"
 	default DRM_PANEL_MSM89X7_GENERATED
