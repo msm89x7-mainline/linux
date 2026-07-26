@@ -1,24 +1,19 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2025 Val Packett
+ * Copyright (c) 2025, Barnabas Czeman
  */
 
-/dts-v1/;
-
-#include "msm8917.dtsi"
 #include "msm8937-msm8917-motorola-common.dtsi"
 
 / {
-	model = "Motorola Moto E5 (nora)";
-	compatible = "motorola,nora", "qcom,msm8917";
-	qcom,msm-id = <QCOM_ID_MSM8917 0>;
-	qcom,board-id = <0x41 0x8100>,
-			<0x41 0x8000>;
+	model = "Motorola Moto E5 Plus (hannah)";
+	qcom,board-id = <0x46 0x8000>,
+			<0x47 0x8000>;
 
 	battery: battery {
 		compatible = "simple-battery";
 
-		charge-full-design-microamp-hours = <4000000>;
+		charge-full-design-microamp-hours = <5000000>;
 		constant-charge-current-max-microamp = <1000000>;
 		voltage-min-design-microvolt = <3400000>;
 		voltage-max-design-microvolt = <4400000>;
@@ -58,38 +53,9 @@
 			no-map;
 		};
 	};
-
-	/*
-	 * We bitbang on &i2c_4 because BLSP is protected by TZ as sensors are
-	 * normally proxied via ADSP firmware. GPIOs aren't protected.
-	 */
-	i2c-sensors {
-		compatible = "i2c-gpio";
-		sda-gpios = <&tlmm 14 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-		scl-gpios = <&tlmm 15 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-		i2c-gpio,delay-us = <2>; /* ~100 kHz */
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		imu@18 {
-			compatible = "bosch,bma253";
-			reg = <0x18>;
-
-			interrupts-extended = <&tlmm 41 IRQ_TYPE_EDGE_RISING>;
-
-			vdd-supply = <&pm8937_l10>;
-			vddio-supply = <&pm8937_l6>;
-
-			mount-matrix = "-1", "0", "0",
-					"0", "-1", "0",
-					"0", "0", "-1";
-		};
-	};
 };
 
 &blsp1_i2c2 {
-	clock-frequency = <400000>;
-
 	status = "okay";
 
 	proximity@28 {
@@ -122,24 +88,64 @@
 		touchscreen-size-x = <720>;
 		touchscreen-size-y = <1440>;
 	};
-
-	/* ILI9881 @ 0x41 */
 };
 
 &mdss_dsi0 {
 	panel@0 {
-		compatible = "motorola,nora-panel";
+		compatible = "motorola,hannah-panel";
 	};
 };
 
+&pmi8950_flash {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	status = "okay";
+
+	led@0 {
+		reg = <0>;
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_WHITE>;
+		led-max-microamp = <200000>;
+		flash-max-microamp = <1000000>;
+		flash-max-timeout-us = <1280000>;
+	};
+
+	led@1 {
+		reg = <1>;
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_WHITE>;
+		led-max-microamp = <200000>;
+		flash-max-microamp = <1000000>;
+		flash-max-timeout-us = <1280000>;
+	};
+};
+
+&pmi8950_haptics {
+	qcom,actuator-type = <HAP_TYPE_ERM>;
+	qcom,brake-pattern = <0x3 0x3 0x0 0x0>;
+	qcom,wave-play-rate-us = <5263>;
+	qcom,wave-shape = <HAP_WAVE_SQUARE>;
+	qcom,vmax-millivolt = <2600>;
+
+	status = "okay";
+};
+
 &sound {
-	model = "motorola-nora";
+	model = "motorola-hannah";
 };
 
 &tlmm {
 	gpio-reserved-ranges = <20 4>;
 
-	sx9310_default: sx9310-default {
+	cam_sensor_front_default: cam-sensor-front-default-state {
+		pins = "gpio40";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	sx9310_default: sx9310-default-state {
 		pins = "gpio59";
 		function = "gpio";
 		drive-strength = <2>;
@@ -148,14 +154,64 @@
 	};
 };
 
+&camss {
+	vdda-supply = <&pm8937_l2>;
+
+	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			csiphy1_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1>;
+				remote-endpoint = <&front_cam_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	pinctrl-0 = <&cci0_default>;
+	pinctrl-names = "default";
+
+	status = "okay";
+};
+
+&cci_i2c0 {
+	camera-sensor@10 {
+		compatible = "ovti,ov5675";
+
+		reg = <0x10>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK1_CLK>;
+
+		pinctrl-0 = <&cam_sensor_front_default>, <&camss_mclk1_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+
+		avdd-supply= <&pm8937_l22>;
+		dvdd-supply = <&pm8937_l23>;
+		dovdd-supply = <&pm8937_l6>;
+		orientation = <0>;
+		rotation = <90>;
+
+		port {
+			front_cam_ep: endpoint {
+				data-lanes = <0 1>;
+				remote-endpoint = <&csiphy1_ep>;
+				link-frequencies = /bits/ 64 <450000000>;
+			};
+		};
+	};
+};
+
 &wcd_codec {
 	qcom,mbhc-vthreshold-high = <75 150 225 450 500>;
 	qcom,mbhc-vthreshold-low = <75 150 225 450 500>;
 	qcom,micbias1-ext-cap;
-};
-
-&wcnss_ctrl {
-	firmware-name = "qcom/msm8917/motorola/nora/WCNSS_qcom_wlan_nv.bin";
 };
 
 &wcnss_iris {
