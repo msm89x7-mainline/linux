@@ -188,3 +188,7 @@ sphinx_*/
 
 # bc language scripts (not LLVM bitcode)
 !kernel/time/timeconst.bc
+
+# Build artifacts generated during porting (do not track)
+/boot*.img
+/build_*.py

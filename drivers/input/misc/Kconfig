@@ -271,8 +271,6 @@ config INPUT_MAX7360_ROTARY
 	  If you say yes here you get support for the rotary encoder on the
 	  Maxim MAX7360 I/O Expander.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called max7360_rotary.
 
 config INPUT_MAX77650_ONKEY
 	tristate "Maxim MAX77650 ONKEY support"
@@ -346,8 +344,6 @@ config INPUT_APANEL
 	 an SMBus interface managed by the I2C Intel ICH (i801) driver,
 	 which you should also build for this kernel.
 
-	 To compile this driver as a module, choose M here: the module will
-	 be called apanel.
 
 config INPUT_GPIO_BEEPER
 	tristate "Generic GPIO Beeper support"
@@ -378,8 +374,7 @@ config INPUT_GPIO_VIBRA
 
 	  If unsure, say N.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called gpio-vibra.
+
 
 config INPUT_COBALT_BTNS
 	tristate "Cobalt button interface"
@@ -412,8 +407,6 @@ config INPUT_WISTRON_BTNS
 	  laptops of various brands, including Acer and Fujitsu-Siemens. If
 	  available, mail and wifi LEDs will be controllable via /sys/class/leds.
 
-	  To compile this driver as a module, choose M here: the module will
-	  be called wistron_btns.
 
 config INPUT_ATLAS_BTNS
 	tristate "x86 Atlas button interface"
@@ -422,8 +415,6 @@ config INPUT_ATLAS_BTNS
 	  Say Y here for support of Atlas wallmount touchscreen buttons.
 	  The events will show up as scancodes F1 through F9 via evdev.
 
-	  To compile this driver as a module, choose M here: the module will
-	  be called atlas_btns.
 
 config INPUT_ATI_REMOTE2
 	tristate "ATI / Philips USB RF remote control"
@@ -437,8 +428,6 @@ config INPUT_ATI_REMOTE2
 	  This driver provides mouse pointer, left and right mouse buttons,
 	  and maps all the other remote buttons to keypress events.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called ati_remote2.
 
 config INPUT_KEYSPAN_REMOTE
 	tristate "Keyspan DMR USB remote control"
@@ -452,8 +441,6 @@ config INPUT_KEYSPAN_REMOTE
 	  supported at this time.  This driver maps all buttons to keypress
 	  events.
 
-	  To compile this driver as a module, choose M here: the module will
-	  be called keyspan_remote.
 
 config INPUT_KXTJ9
 	tristate "Kionix KXTJ9 tri-axis digital accelerometer"
@@ -462,8 +449,6 @@ config INPUT_KXTJ9
 	  Say Y here to enable support for the Kionix KXTJ9 digital tri-axis
 	  accelerometer.
 
-	  To compile this driver as a module, choose M here: the module will
-	  be called kxtj9.
 
 config INPUT_POWERMATE
 	tristate "Griffin PowerMate and Contour Jog support"
@@ -493,8 +478,6 @@ config INPUT_YEALINK
 	  For information about how to use these additional functions, see
 	  <file:Documentation/input/devices/yealink.rst>.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called yealink.
 
 config INPUT_CM109
 	tristate "C-Media CM109 USB I/O Controller"
@@ -505,8 +488,6 @@ config INPUT_CM109
 	  C-Media CM109 usb phones. The audio part is enabled by the generic
 	  usb sound driver, so you might want to enable that as well.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called cm109.
 
 config INPUT_REGULATOR_HAPTIC
 	tristate "Regulator haptics support"
@@ -656,8 +637,6 @@ config INPUT_PWM_BEEPER
 
 	  If unsure, say N.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called pwm-beeper.
 
 config INPUT_PWM_VIBRA
 	tristate "PWM vibrator support"
@@ -668,8 +647,6 @@ config INPUT_PWM_VIBRA
 
 	  If unsure, say N.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called pwm-vibra.
 
 config INPUT_RK805_PWRKEY
 	tristate "Rockchip RK805 PMIC power key support"
@@ -679,8 +656,6 @@ config INPUT_RK805_PWRKEY
 
 	  If unsure, say N.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called rk805_pwrkey.
 
 config INPUT_GPIO_ROTARY_ENCODER
 	tristate "Rotary encoders connected to GPIO pins"
@@ -819,8 +794,6 @@ config INPUT_IBM_PANEL
 	  perform various administrative tasks. This driver only supports the part
 	  of the controller that sends commands to the system.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called ibm-panel.
 
 config INPUT_IMS_PCU
 	tristate "IMS Passenger Control Unit driver"
@@ -829,8 +802,6 @@ config INPUT_IMS_PCU
 	help
 	  Say Y here if you have system with IMS Rave Passenger Control Unit.
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called ims_pcu.
 
 config INPUT_IQS269A
 	tristate "Azoteq IQS269A capacitive touch controller"
