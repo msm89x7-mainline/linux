@@ -9,9 +9,12 @@
 #include <dt-bindings/arm/qcom,ids.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/leds/common.h>
+#include <dt-bindings/sound/qcom,q6afe.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
 #include "sdm429.dtsi"
 #include "pm8953.dtsi"
 #include "pmi632.dtsi"
+#include "msm8937-qdsp6.dtsi"
 
 / {
 	model = "Lenovo Tab M10 HD";
@@ -37,12 +40,12 @@
 			format = "r8g8b8";
 
 			clocks = <&gcc GCC_MDSS_AHB_CLK>,
-				 <&gcc GCC_MDSS_AXI_CLK>,
-				 <&gcc GCC_MDSS_VSYNC_CLK>,
-				 <&gcc GCC_MDSS_MDP_CLK>,
-				 <&gcc GCC_MDSS_BYTE0_CLK>,
-				 <&gcc GCC_MDSS_PCLK0_CLK>,
-				 <&gcc GCC_MDSS_ESC0_CLK>;
+				<&gcc GCC_MDSS_AXI_CLK>,
+				<&gcc GCC_MDSS_VSYNC_CLK>,
+				<&gcc GCC_MDSS_MDP_CLK>,
+				<&gcc GCC_MDSS_BYTE0_CLK>,
+				<&gcc GCC_MDSS_PCLK0_CLK>,
+				<&gcc GCC_MDSS_ESC0_CLK>;
 			power-domains = <&gcc MDSS_GDSC>;
 		};
 	};
@@ -168,6 +171,14 @@
 };
 
 &pmi632_vib {
+	status = "okay";
+};
+
+&apr {
+	status = "okay";
+};
+
+&lpass_codec {
 	status = "okay";
 };
 
@@ -421,6 +432,40 @@
 	clock-frequency = <32768>;
 };
 
+/*
+ * msm8937.dtsi defines sound: sound-card@c051000 with status = "disabled"
+ * and the required reg/reg-names for the iomux registers. We enable it
+ * here and add the board-specific DAI links and routing.
+ */
+&sound {
+	status = "okay";
+	model = "tbx505x-audio";
+
+	audio-routing =
+		"Headphone Jack", "HPH_L",
+		"Headphone Jack", "HPH_R",
+		"AMIC1", "MIC BIAS External1",
+		"AMIC2", "MIC BIAS External2";
+};
+
+/*
+ * WCD analog codec — PM8953 internal.
+ */
+&wcd_codec {
+	status = "okay";
+
+	qcom,hphl-jack-type-normally-open;
+	qcom,gnd-jack-type-normally-open;
+	qcom,micbias1-ext-cap;
+	qcom,micbias2-ext-cap;
+	qcom,mbhc-vthreshold-low  = <75 150 237 450 500>;
+	qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
+
+	vdd-cdc-io-supply       = <&pm8953_l5>;
+	vdd-cdc-tx-rx-cx-supply = <&pm8953_s4>;
+	vdd-micbias-supply      = <&pm8953_l13>;
+};
+
 &tlmm {
 	gpio-reserved-ranges = <0 4>;
 
@@ -443,6 +488,87 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	/*
+	 * PDM bus — downstream misleadingly named "pri-mi2s-gpios"
+	 * but function is cdc_pdm0, not MI2S.
+	 */
+	cdc_pdm_a_default: cdc-pdm-a-default-state {
+		pins = "gpio69", "gpio73", "gpio74";
+		function = "cdc_pdm0";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	cdc_pdm_a_sleep: cdc-pdm-a-sleep-state {
+		pins = "gpio69", "gpio73", "gpio74";
+		function = "cdc_pdm0";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cdc_pdm_b_default: cdc-pdm-b-default-state {
+		pins = "gpio70", "gpio71", "gpio72";
+		function = "cdc_pdm0";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	cdc_pdm_b_sleep: cdc-pdm-b-sleep-state {
+		pins = "gpio70", "gpio71", "gpio72";
+		function = "cdc_pdm0";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	/* External speaker PA — GPIO 48 */
+	ext_spk_pa_default: ext-spk-pa-default-state {
+		pins = "gpio48";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	ext_spk_pa_sleep: ext-spk-pa-sleep-state {
+		pins = "gpio48";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+		output-low;
+	};
+
+	/*
+	 * Quinary MI2S — for WSA speaker path if needed later.
+	 * GPIO 88 = SCK, GPIO 89 = WS (confirmed from DTB).
+	 */
+	quin_mi2s_active: quin-mi2s-active-state {
+		pins = "gpio88";
+		function = "pri_mi2s";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	quin_mi2s_sleep: quin-mi2s-sleep-state {
+		pins = "gpio88";
+		function = "pri_mi2s";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	quin_mi2s_ws_active: quin-mi2s-ws-active-state {
+		pins = "gpio89";
+		function = "pri_mi2s_ws";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	quin_mi2s_ws_sleep: quin-mi2s-ws-sleep-state {
+		pins = "gpio89";
+		function = "pri_mi2s_ws";
+		drive-strength = <2>;
+		bias-pull-down;
 	};
 };
 
@@ -481,4 +607,16 @@
 
 &xo_board {
 	clock-frequency = <19200000>;
+};
+
+&q6afedai {
+	status = "okay";
+};
+
+&q6routing {
+	status = "okay";
+};
+
+&q6asmdai  {
+	status = "okay";
 };

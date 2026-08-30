@@ -2425,6 +2425,11 @@
 								qcom,sd-lines = <0 1>;
 							};
 
+							dai@17 {
+								reg = <PRIMARY_MI2S_TX>;
+								qcom,sd-lines = <0 1>;
+							};
+
 							dai@20 {
 								reg = <TERTIARY_MI2S_TX>;
 								qcom,sd-lines = <0 1>;
