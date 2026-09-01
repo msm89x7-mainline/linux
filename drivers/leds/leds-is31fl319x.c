@@ -521,8 +521,9 @@ static int is31fl319x_probe(struct i2c_client *client)
 
 	/* check for write-reply from chip (we can't read any registers) */
 	err = regmap_write(is31->regmap, is31->cdef->reset_reg, 0x00);
-	if (err < 0)
-		return dev_err_probe(dev, err, "no response from chip write\n");
+	if (err < 0) {
+		dev_warn(dev, "no response from chip write, err %d\n", err);
+	}
 
 	/*
 	 * Kernel conventions require per-LED led-max-microamp property.

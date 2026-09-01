@@ -223,6 +223,11 @@ properties:
 
       - items:
           - enum:
+              - generalmobile,shamrock
+          - const: qcom,msm8952
+
+      - items:
+          - enum:
               - flipkart,rimob
               - motorola,potter
               - xiaomi,daisy
@@ -1269,6 +1274,7 @@ allOf:
               - qcom,msm8917
               - qcom,msm8937
               - qcom,msm8939
+              - qcom,msm8952
               - qcom,msm8953
               - qcom,msm8956
               - qcom,msm8992

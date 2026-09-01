@@ -607,6 +607,7 @@ int msm_csiphy_subdev_init(struct camss *camss,
 	    camss->res->version == CAMSS_8x17 ||
 	    camss->res->version == CAMSS_8x37 ||
 	    camss->res->version == CAMSS_8x39 ||
+	    camss->res->version == CAMSS_8x52 ||
 	    camss->res->version == CAMSS_8x53 ||
 	    camss->res->version == CAMSS_8x96) {
 		csiphy->base_clk_mux =

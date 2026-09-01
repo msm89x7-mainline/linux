@@ -238,6 +238,7 @@ static const struct of_device_id sns_reg_supported_socs[] __maybe_unused = {
 	{ .compatible = "qcom,msm8920", .data = &sns_reg_target_adsp, },
 	{ .compatible = "qcom,msm8937", .data = &sns_reg_target_adsp, },
 	{ .compatible = "qcom,msm8940", .data = &sns_reg_target_adsp, },
+	{ .compatible = "qcom,msm8952", .data = &sns_reg_target_adsp, },
 	{ .compatible = "qcom,msm8953", .data = &sns_reg_target_adsp, },
 	{ .compatible = "qcom,msm8974", .data = &sns_reg_target_adsp, }, /* untested */
 	{ .compatible = "qcom,msm8996", .data = &sns_reg_target_slpi, },
