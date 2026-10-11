@@ -93,6 +93,16 @@ properties:
   factory-internal-resistance-micro-ohms:
     description: battery factory internal resistance
 
+  id-resistor-ohms:
+    maxItems: 1
+    description: |
+      Resistance of the identification resistor built into the pack, on boards
+      where more than one battery may be fitted and a charger can tell them
+      apart by measuring it. Naming it here lets a driver refuse to apply this
+      battery's limits to a pack that is demonstrably a different one; how the
+      resistance is measured is a property of the board and of the charger, not
+      of the cell.
+
   resistance-temp-table:
     $ref: /schemas/types.yaml#/definitions/uint32-matrix
     items:

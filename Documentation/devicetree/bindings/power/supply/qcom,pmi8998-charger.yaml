@@ -4,16 +4,23 @@
 $id: http://devicetree.org/schemas/power/supply/qcom,pmi8998-charger.yaml#
 $schema: http://devicetree.org/meta-schemas/core.yaml#
 
-title: Qualcomm PMI8998/PM660 Switch-Mode Battery Charger "2"
+title: Qualcomm Switch-Mode Battery Charger "2" and "5"
 
 maintainers:
   - Casey Connolly <casey.connolly@linaro.org>
+
+description: |
+  The charger peripheral of a Qualcomm PMIC, in either of two generations:
+  SMB2 on the PMI8998 and PM660, and SMB5 on the PMI632. They differ in the
+  register layout and in which analog channels the PMIC routes, not in the
+  shape of this binding.
 
 properties:
   compatible:
     enum:
       - qcom,pmi8998-charger
       - qcom,pm660-charger
+      - qcom,pmi632-charger
 
   reg:
     maxItems: 1
@@ -29,16 +36,94 @@ properties:
       - const: usbin-icl-change
 
   io-channels:
+    minItems: 2
     items:
       - description: USB in current in uA
       - description: USB in voltage in uV
+      - description: Battery voltage in uV
+      - description: Battery thermistor, as a raw ADC code
+      - description: Battery ID resistor divider voltage in uV
 
   io-channel-names:
+    minItems: 2
     items:
       - const: usbin_i
       - const: usbin_v
+      - const: vbat
+      - const: bat_therm
+      - const: bat_id
 
   monitored-battery: true
+
+  qcom,batt-id-pullup-ohms:
+    maxItems: 1
+    description: |
+      Resistance of the pull-up from the PMIC reference to the BAT_ID net, in
+      ohms. Together with the voltage read on the bat_id channel this gives the
+      resistance of the identification resistor inside the pack, which is
+      compared against the id-resistor-ohms of the monitored battery. Describe
+      it only on boards that route BAT_ID.
+
+  qcom,batt-id-tolerance-percent:
+    maxItems: 1
+    description: |
+      How far, as a percentage, the resistance measured through that divider
+      may differ from the monitored battery's id-resistor-ohms and still count
+      as the same pack. The tolerance belongs here rather than to the cell
+      because it has to cover the divider and the ADC as well as the resistor
+      itself.
+
+  qcom,auto-recharge-microvolt:
+    description: |
+      Battery voltage, in microvolts, below which a finished charge is started
+      again. Must be below the monitored battery's
+      constant-charge-voltage-max-microvolt. Absent, the comparator keeps
+      whatever threshold it powers up with.
+
+  qcom,jeita-hard-thresholds:
+    $ref: /schemas/types.yaml#/definitions/uint32-array
+    minItems: 2
+    maxItems: 2
+    description: |
+      The pair of raw BAT_THERM ADC codes { cold, hot } outside which charging
+      stops outright, cold first. These are codes rather than temperatures
+      because the comparators take codes, and which code a temperature produces
+      depends on this PMIC's ADC full scale and on the board's pull-up as much
+      as on the cell - which is also why they are described here and not on the
+      battery.
+
+  qcom,jeita-soft-thresholds:
+    $ref: /schemas/types.yaml#/definitions/uint32-array
+    minItems: 2
+    maxItems: 2
+    description: |
+      The pair of raw BAT_THERM ADC codes { cold, hot } inside which the pack
+      may be charged at full current, in the same units and for the same reason
+      as qcom,jeita-hard-thresholds. Between a soft and a hard threshold the
+      charge current is reduced instead of stopped.
+
+  qcom,jeita-soft-fcc-microamp:
+    minItems: 2
+    maxItems: 2
+    description: |
+      Fast-charge current, in microamperes, to be left with in the cool and the
+      warm soft zone, in that order. The hardware subtracts a fixed offset from
+      whatever current is programmed, so describing the wanted result rather
+      than the offset keeps the property meaningful when the current changes.
+
+  qcom,thermal-mitigation:
+    $ref: /schemas/types.yaml#/definitions/uint32-array
+    minItems: 2
+    maxItems: 16
+    description: |
+      Fast-charge current limit, in microamperes, for each state of the cooling
+      device the charger registers. The first entry is cooling state 0 and must
+      be the most permissive; entries must not increase. A thermal zone reduces
+      the charge current by requesting a higher state, so state 0 is what the
+      charger falls back to when nothing is throttling it.
+
+  '#cooling-cells':
+    const: 2
 
 required:
   - compatible
@@ -78,5 +163,39 @@ examples:
                            "usbin_v";
 
         monitored-battery = <&battery>;
+      };
+    };
+
+  - |
+    #include <dt-bindings/interrupt-controller/irq.h>
+    #include <dt-bindings/iio/qcom,spmi-vadc.h>
+
+    pmic {
+      #address-cells = <1>;
+      #size-cells = <0>;
+
+      charger@1000 {
+        compatible = "qcom,pmi632-charger";
+        reg = <0x1000>;
+
+        interrupts = <0x2 0x13 0x4 IRQ_TYPE_EDGE_BOTH>,
+                     <0x2 0x12 0x2 IRQ_TYPE_EDGE_BOTH>,
+                     <0x2 0x16 0x1 IRQ_TYPE_EDGE_RISING>,
+                     <0x2 0x13 0x6 IRQ_TYPE_EDGE_RISING>;
+        interrupt-names = "usb-plugin", "bat-ov", "wdog-bark", "usbin-icl-change";
+
+        io-channels = <&pmi632_adc ADC5_USB_IN_I>,
+                      <&pmi632_adc ADC5_USB_IN_V_16>,
+                      <&pmi632_adc ADC5_VBAT_SNS>,
+                      <&pmi632_adc ADC5_BAT_THERM_100K_PU>,
+                      <&pmi632_adc ADC5_BAT_ID_100K_PU>;
+        io-channel-names = "usbin_i", "usbin_v", "vbat",
+                           "bat_therm", "bat_id";
+
+        monitored-battery = <&battery>;
+        qcom,batt-id-pullup-ohms = <100000>;
+        qcom,thermal-mitigation = <2000000 1500000 1000000 500000>;
+
+        #cooling-cells = <2>;
       };
     };

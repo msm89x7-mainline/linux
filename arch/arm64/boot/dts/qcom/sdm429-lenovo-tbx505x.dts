@@ -47,6 +47,34 @@
 		};
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4400000>;
+		charge-full-design-microamp-hours = <4982000>;
+		constant-charge-current-max-microamp = <2000000>;
+		constant-charge-voltage-max-microvolt = <4400000>;
+		charge-term-current-microamp = <170000>;
+		factory-internal-resistance-micro-ohms = <120000>;
+		id-resistor-ohms = <21000>;
+
+		ocv-capacity-celsius = <25>;
+		ocv-capacity-table-0 = <4382700 100>, <4361700 98>, <4339700 96>, <4314400 94>,
+			<4289200 92>, <4264600 90>, <4240400 88>, <4216900 86>,
+			<4194100 84>, <4171800 82>, <4149400 80>, <4128600 78>,
+			<4111200 76>, <4094700 74>, <4072300 72>, <4040700 70>,
+			<4014800 68>, <3999700 66>, <3987400 64>, <3973500 62>,
+			<3959100 60>, <3941400 58>, <3914200 56>, <3887900 54>,
+			<3872900 52>, <3862200 50>, <3852900 48>, <3844900 46>,
+			<3837600 44>, <3830500 42>, <3824000 40>, <3818100 38>,
+			<3812700 36>, <3807800 34>, <3803900 32>, <3800400 30>,
+			<3796700 28>, <3793000 26>, <3788100 24>, <3780000 22>,
+			<3769700 20>, <3758500 18>, <3745600 16>, <3730200 14>,
+			<3715700 12>, <3706400 10>, <3704000 9>, <3702300 8>,
+			<3700700 7>, <3697000 6>, <3675800 5>, <3634000 4>,
+			<3577700 3>, <3501200 2>, <3383700 1>, <3000000 0>;
+	};
+
 	usb_vbus: extcon-usb-dummy {
 		compatible = "linux,extcon-usb-dummy";
 	};
@@ -141,6 +169,23 @@
 
 &pm8953_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
+
+	status = "okay";
+};
+
+&pmi632_charger {
+	#cooling-cells = <2>;
+	io-channels = <&pmi632_adc ADC5_USB_IN_I>,
+		      <&pmi632_adc ADC5_USB_IN_V_16>,
+		      <&pmi632_adc ADC5_VBAT_SNS>;
+	io-channel-names = "usbin_i", "usbin_v", "vbat";
+	monitored-battery = <&battery>;
+	qcom,batt-id-pullup-ohms = <100000>;
+	qcom,auto-recharge-microvolt = <4350000>;
+	qcom,jeita-hard-thresholds = <0x36b9 0x0dbf>;
+	qcom,jeita-soft-thresholds = <0x2554 0x0fdc>;
+	qcom,jeita-soft-fcc-microamp = <975000 1000000>;
+	qcom,thermal-mitigation = <2000000 1500000 1000000 800000 500000 200000>;
 
 	status = "okay";
 };
@@ -419,6 +464,45 @@
 
 &sleep_clk {
 	clock-frequency = <32768>;
+};
+
+&{/thermal-zones/pmi632-thermal} {
+	trips {
+		pmi632_charger_warm: charger-warm {
+			temperature = <70000>;
+			hysteresis = <2000>;
+			type = "passive";
+		};
+
+		pmi632_charger_hot: charger-hot {
+			temperature = <80000>;
+			hysteresis = <2000>;
+			type = "passive";
+		};
+
+		pmi632_charger_very_hot: charger-very-hot {
+			temperature = <90000>;
+			hysteresis = <2000>;
+			type = "passive";
+		};
+	};
+
+	cooling-maps {
+		map-charger-warm {
+			trip = <&pmi632_charger_warm>;
+			cooling-device = <&pmi632_charger 1 1>;
+		};
+
+		map-charger-hot {
+			trip = <&pmi632_charger_hot>;
+			cooling-device = <&pmi632_charger 3 3>;
+		};
+
+		map-charger-very-hot {
+			trip = <&pmi632_charger_very_hot>;
+			cooling-device = <&pmi632_charger 5 5>;
+		};
+	};
 };
 
 &tlmm {

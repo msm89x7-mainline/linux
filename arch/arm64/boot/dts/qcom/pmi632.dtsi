@@ -5,6 +5,7 @@
 
 #include <dt-bindings/iio/qcom,spmi-vadc.h>
 #include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/leds/common.h>
 #include <dt-bindings/spmi/spmi.h>
 
 / {
@@ -47,6 +48,114 @@
 		pmi632_vbus: usb-vbus-regulator@1100 {
 			compatible = "qcom,pmi632-vbus-reg", "qcom,pm8150b-vbus-reg";
 			reg = <0x1100>;
+			status = "disabled";
+		};
+
+		pmi632_charger: charger@1000 {
+			compatible = "qcom,pmi632-charger";
+			reg = <0x1000>;
+
+			/*
+			 * The charger's interrupt sources, in the order the
+			 * downstream qpnp-smb5 device tree gives them. SMB5
+			 * renumbered the USB peripheral against SMB2 - vashdn
+			 * and revi-change are new, which pushes src-change to
+			 * 6 and icl-change to 7 - so the indices here are not
+			 * the pmi8998 ones they were first copied from.
+			 */
+			interrupts = <0x2 0x13 0x4 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x12 0x2 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x16 0x1 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x13 0x7 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x48 0x4 IRQ_TYPE_EDGE_RISING>,
+				     /* CHGR */
+				     <0x2 0x10 0x0 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x1 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x2 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x3 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x4 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x5 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x6 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x10 0x7 IRQ_TYPE_EDGE_RISING>,
+				     /* DCDC */
+				     <0x2 0x11 0x0 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x11 0x1 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x11 0x2 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x11 0x3 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x11 0x4 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x11 0x5 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x11 0x6 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x11 0x7 IRQ_TYPE_EDGE_BOTH>,
+				     /* BATIF */
+				     <0x2 0x12 0x0 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x12 0x3 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x12 0x4 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x12 0x5 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x12 0x6 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x12 0x7 IRQ_TYPE_EDGE_BOTH>,
+				     /* USB */
+				     <0x2 0x13 0x0 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x13 0x1 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x13 0x2 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x13 0x3 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x13 0x5 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x13 0x6 IRQ_TYPE_EDGE_RISING>,
+				     /* MISC */
+				     <0x2 0x16 0x0 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x16 0x2 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x16 0x3 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x16 0x4 IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x16 0x5 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x16 0x6 IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x16 0x7 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "usb-plugin",
+					  "bat-ov",
+					  "wdog-bark",
+					  "usbin-icl-change",
+					  "good-ocv",
+					  "chgr-error",
+					  "chg-state-change",
+					  "step-chg-state-change",
+					  "step-chg-soc-update-fail",
+					  "step-chg-soc-update-req",
+					  "fg-fvcal-qualified",
+					  "vph-alarm",
+					  "vph-drop-prechg",
+					  "otg-fail",
+					  "otg-oc-disable-sw",
+					  "otg-oc-hiccup",
+					  "bsm-active",
+					  "high-duty-cycle",
+					  "input-current-limiting",
+					  "concurrent-mode-disable",
+					  "switcher-power-ok",
+					  "bat-temp",
+					  "bat-low",
+					  "bat-therm-or-id-missing",
+					  "bat-terminal-missing",
+					  "buck-oc",
+					  "vph-ov",
+					  "usbin-collapse",
+					  "usbin-vashdn",
+					  "usbin-uv",
+					  "usbin-ov",
+					  "usbin-revi-change",
+					  "usbin-src-change",
+					  "wdog-snarl",
+					  "aicl-fail",
+					  "aicl-done",
+					  "smb-en",
+					  "imp-trigger",
+					  "temp-change",
+					  "temp-change-smb";
+
+			io-channels = <&pmi632_adc ADC5_USB_IN_I>,
+				      <&pmi632_adc ADC5_USB_IN_V_16>,
+				      <&pmi632_adc ADC5_VBAT_SNS>,
+				      <&pmi632_adc ADC5_BAT_THERM_100K_PU>;
+			io-channel-names = "usbin_i", "usbin_v", "vbat",
+					   "bat_therm";
+
 			status = "disabled";
 		};
 
@@ -123,6 +232,14 @@
 				reg = <ADC5_CHG_TEMP>;
 				qcom,pre-scaling = <1 1>;
 				label = "chg_temp";
+			};
+
+			channel@4a {
+				reg = <ADC5_BAT_THERM_100K_PU>;
+				qcom,hw-settle-time = <200>;
+				qcom,pre-scaling = <1 1>;
+				qcom,ratiometric;
+				label = "bat_therm";
 			};
 
 			channel@4b {
@@ -203,6 +320,12 @@
 		pmi632_vib: vibrator@5700 {
 			compatible = "qcom,pmi632-vib";
 			reg = <0x5700>;
+			status = "disabled";
+		};
+
+		pmi632_flash: led-controller@d300 {
+			compatible = "qcom,pmi632-flash-led", "qcom,spmi-flash-led";
+			reg = <0xd300>;
 			status = "disabled";
 		};
 	};
