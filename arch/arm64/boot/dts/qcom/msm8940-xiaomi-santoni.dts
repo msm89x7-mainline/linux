@@ -71,6 +71,13 @@
 		};
 	};
 
+	multi-led {
+		compatible = "leds-group-multicolor";
+		color = <LED_COLOR_ID_RGB>;
+		function = LED_FUNCTION_STATUS;
+		leds = <&led0>, <&led1>, <&led2>;
+	};
+
 	reserved-memory {
 		/delete-node/ reserved@85b00000;
 
@@ -134,21 +141,21 @@
 		vcc-supply = <&pm8937_l10>;
 		vio-supply = <&pm8937_l5>;
 
-		led@0 {
+		led0: led@0 {
 			reg = <0>;
 			function = LED_FUNCTION_STATUS;
 			led-max-microamp = <5000>;
 			color = <LED_COLOR_ID_RED>;
 		};
 
-		led@1 {
+		led1: led@1 {
 			reg = <1>;
 			function = LED_FUNCTION_STATUS;
 			led-max-microamp = <5000>;
 			color = <LED_COLOR_ID_GREEN>;
 		};
 
-		led@2 {
+		led2: led@2 {
 			reg = <2>;
 			function = LED_FUNCTION_STATUS;
 			led-max-microamp = <5000>;
@@ -160,11 +167,11 @@
 &blsp1_i2c3 {
 	status = "okay";
 
-	touchscreen@38 {
-		compatible = "edt,edt-ft5406";
-		reg = <0x38>;
+	touchscreen@3e {
+		compatible = "edt,edt-ft5306";
+		reg = <0x3e>;
 
-		interrupts-extended = <&tlmm 65 IRQ_TYPE_EDGE_FALLING>;
+		interrupts-extended = <&tlmm 65 IRQ_TYPE_LEVEL_LOW>;
 		reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
 		vcc-supply = <&pm8937_l10>;
 		iovcc-supply = <&pm8937_l5>;
