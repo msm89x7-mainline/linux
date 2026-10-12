@@ -1251,8 +1251,12 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client)
 
 	error = edt_ft5x06_ts_identify(client, tsdata);
 	if (error) {
-		dev_err(&client->dev, "touchscreen probe failed\n");
-		return error;
+		client->addr = 0x38;
+		error = edt_ft5x06_ts_identify(client, tsdata);
+		if (error) {
+			dev_err(&client->dev, "touchscreen probe failed\n");
+			return error;
+		}
 	}
 
 	/*
