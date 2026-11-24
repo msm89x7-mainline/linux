@@ -3,6 +3,8 @@
 #ifndef __QCOM_QRTR_H__
 #define __QCOM_QRTR_H__
 
+#include <linux/device-id/qrtr.h>
+
 struct qrtr_device {
 	struct device dev;
 	unsigned int node;
