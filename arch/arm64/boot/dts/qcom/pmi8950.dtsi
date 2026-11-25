@@ -176,9 +176,11 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		labibb {
+		pmi8950_labibb: labibb {
 			compatible = "qcom,pmi8950-lab-ibb",
 				     "qcom,pmi8998-lab-ibb";
+
+			status = "disabled";
 
 			ibb: ibb {
 				interrupts = <0x3 0xdc 0x2 IRQ_TYPE_EDGE_RISING>,
