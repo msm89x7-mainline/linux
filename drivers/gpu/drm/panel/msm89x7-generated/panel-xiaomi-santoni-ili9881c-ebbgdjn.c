@@ -4,9 +4,10 @@
 //   Copyright (c) 2013, The Linux Foundation. All rights reserved. (FIXME)
 
 #include <linux/delay.h>
+#include <linux/device-id/of.h>
 #include <linux/gpio/consumer.h>
-#include <linux/mod_devicetable.h>
 #include <linux/module.h>
+#include <linux/regulator/consumer.h>
 
 #include <video/mipi_display.h>
 
@@ -18,7 +19,15 @@
 struct ili9881c_ebbgdjn {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
+	struct regulator_bulk_data *supplies;
 	struct gpio_desc *reset_gpio;
+};
+
+static const struct regulator_bulk_data ili9881c_ebbgdjn_supplies[] = {
+	{ .supply = "vdd" },
+	{ .supply = "vddio" },
+	{ .supply = "vsn" },
+	{ .supply = "vsp" },
 };
 
 static inline
@@ -97,12 +106,19 @@ static int ili9881c_ebbgdjn_prepare(struct drm_panel *panel)
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
+	ret = regulator_bulk_enable(ARRAY_SIZE(ili9881c_ebbgdjn_supplies), ctx->supplies);
+	if (ret < 0) {
+		dev_err(dev, "Failed to enable regulators: %d\n", ret);
+		return ret;
+	}
+
 	ili9881c_ebbgdjn_reset(ctx);
 
 	ret = ili9881c_ebbgdjn_on(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		regulator_bulk_disable(ARRAY_SIZE(ili9881c_ebbgdjn_supplies), ctx->supplies);
 		return ret;
 	}
 
@@ -120,6 +136,7 @@ static int ili9881c_ebbgdjn_unprepare(struct drm_panel *panel)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	regulator_bulk_disable(ARRAY_SIZE(ili9881c_ebbgdjn_supplies), ctx->supplies);
 
 	return 0;
 }
@@ -163,6 +180,13 @@ static int ili9881c_ebbgdjn_probe(struct mipi_dsi_device *dsi)
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
 
+	ret = devm_regulator_bulk_get_const(dev,
+					    ARRAY_SIZE(ili9881c_ebbgdjn_supplies),
+					    ili9881c_ebbgdjn_supplies,
+					    &ctx->supplies);
+	if (ret < 0)
+		return ret;
+
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio))
 		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
@@ -183,27 +207,11 @@ static int ili9881c_ebbgdjn_probe(struct mipi_dsi_device *dsi)
 	if (ret)
 		return dev_err_probe(dev, ret, "Failed to get backlight\n");
 
-	drm_panel_add(&ctx->panel);
+	ret = devm_drm_panel_add(dev, &ctx->panel);
+	if (ret)
+		return ret;
 
-	ret = mipi_dsi_attach(dsi);
-	if (ret < 0) {
-		drm_panel_remove(&ctx->panel);
-		return dev_err_probe(dev, ret, "Failed to attach to DSI host\n");
-	}
-
-	return 0;
-}
-
-static void ili9881c_ebbgdjn_remove(struct mipi_dsi_device *dsi)
-{
-	struct ili9881c_ebbgdjn *ctx = mipi_dsi_get_drvdata(dsi);
-	int ret;
-
-	ret = mipi_dsi_detach(dsi);
-	if (ret < 0)
-		dev_err(&dsi->dev, "Failed to detach from DSI host: %d\n", ret);
-
-	drm_panel_remove(&ctx->panel);
+	return devm_mipi_dsi_attach(dev, dsi);
 }
 
 static const struct of_device_id ili9881c_ebbgdjn_of_match[] = {
@@ -214,7 +222,6 @@ MODULE_DEVICE_TABLE(of, ili9881c_ebbgdjn_of_match);
 
 static struct mipi_dsi_driver ili9881c_ebbgdjn_driver = {
 	.probe = ili9881c_ebbgdjn_probe,
-	.remove = ili9881c_ebbgdjn_remove,
 	.driver = {
 		.name = "panel-xiaomi-santoni-ili9881c-ebbgdjn",
 		.of_match_table = ili9881c_ebbgdjn_of_match,
