@@ -285,6 +285,16 @@
 	status = "okay";
 };
 
+&ibb {
+	regulator-min-microvolt = <5000000>;
+	regulator-max-microvolt = <5000000>;
+};
+
+&lab {
+	regulator-min-microvolt = <5000000>;
+	regulator-max-microvolt = <5000000>;
+};
+
 &lpass_codec{
 	status = "okay";
 };
@@ -295,7 +305,6 @@
 
 &mdss_dsi0 {
 	vdda-supply = <&pm8937_l2>;
-	vddio-supply = <&pm8937_l6>;
 
 	status = "okay";
 
@@ -308,6 +317,11 @@
 
 		pinctrl-0 = <&panel_default>;
 		pinctrl-names = "default";
+
+		vdd-supply = <&pm8937_l17>;
+		vddio-supply = <&pm8937_l6>;
+		vsn-supply = <&ibb>;
+		vsp-supply = <&lab>;
 
 		port {
 			panel_in: endpoint {
@@ -373,6 +387,10 @@
 	qcom,wave-shape = <HAP_WAVE_SQUARE>;
 	qcom,vmax-millivolt = <2700>;
 
+	status = "okay";
+};
+
+&pmi8950_labibb {
 	status = "okay";
 };
 
